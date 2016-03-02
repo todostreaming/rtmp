@@ -11,3 +11,7 @@ func New(header *Header, data []byte) *Chunk {
 		Data:   data,
 	}
 }
+
+func (c *Chunk) TypeId() uint32 {
+	return c.Header.MessageHeader.TypeId
+}
