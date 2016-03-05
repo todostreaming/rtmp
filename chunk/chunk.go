@@ -12,6 +12,7 @@ func New(header *Header, data []byte) *Chunk {
 	}
 }
 
-func (c *Chunk) TypeId() uint32 {
-	return c.Header.MessageHeader.TypeId
-}
+func (c *Chunk) StreamId() uint32 { return c.Header.BasicHeader.StreamId }
+
+// TODO
+func (c *Chunk) TypeId() uint32 { return c.Header.MessageHeader.TypeId }

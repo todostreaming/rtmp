@@ -1,95 +1,42 @@
 package chunk
 
-import (
-	"encoding/binary"
-	"io"
-	"sync"
-
-	"github.com/WatchBeam/rtmp/chunk"
-	"github.com/WatchBeam/rtmp/spec"
-)
+import "io"
 
 type Stream struct {
-	src io.Reader
-
-	bmu      sync.Mutex
-	builders map[uint32]*Builder
-
-	rmu      sync.Mutex
-	readSize int
+	reader     *Reader
+	normalizer *Normalizer
 
 	chunks chan *Chunk
 	errs   chan error
+	closer chan struct{}
+}
+
+func NewStream(src io.Reader) *Stream {
+	return &Stream{
+		reader:     NewReader(src, DefaultReadSize),
+		normalizer: NewNormalizer(),
+		chunks:     make(chan *Chunk),
+		errs:       make(chan error),
+		closer:     make(chan struct{}),
+	}
 }
 
 func (s *Stream) Chunks() <-chan *Chunk { return s.chunks }
 func (s *Stream) Errs() <-chan error    { return s.errs }
-
-func (s *Stream) ReadSize() int {
-	s.rmu.Lock()
-	defer s.rmu.Unlock()
-
-	return s.readSize
-}
-
-func (s *Stream) SetReadSize(size int) {
-	s.rmu.Lock()
-	defer s.rmu.Unlock()
-
-	s.readSize = size
-}
+func (s *Stream) Close()                { s.closer <- struct{}{} }
 
 func (s *Stream) Recv() {
+	go s.reader.Recv()
+	defer s.reader.Close()
+
 	for {
-		header := new(Header)
-		if err := header.Read(s.src); err != nil {
+		select {
+		case chunk := <-s.reader.Chunks():
+			s.chunks <- s.normalizer.Normalize(chunk)
+		case err := <-s.reader.Errs():
 			s.errs <- err
-			continue
-		}
-
-		builder := s.builder(header)
-		n := spec.Min(builder.BytesLeft(), s.ReadSize())
-
-		if err := builder.Read(s.src, n); err != nil {
-			s.errs <- err
-			continue
-		}
-
-		if builder.BytesLeft() == 0 {
-			chunk := builder.Build()
-
-			if !s.updateChunkSize(chunk) {
-				s.chunks <- chunk
-			}
-			s.removeBuilder(chunk.Header.BasicHeader.StreamId)
+		case <-s.closer:
+			break
 		}
 	}
-}
-
-func (s *Stream) updateChunkSize(chunk *Chunk) bool {
-	if chunk.TypeId() != 0x01 {
-		return false
-	}
-
-	s.SetReadSize(binary.BigEndian.Uint32(chunk.Data))
-	return true
-}
-
-func (s *Stream) builder(header *Header) {
-	s.bmu.Lock()
-	defer s.bmu.Unlock()
-
-	stream := header.BasicHeader.StreamId
-	if s.builders[stream] == nil {
-		s.builders[stream] = NewBuilder(header)
-	}
-
-	return s.builders[stream]
-}
-
-func (s *Stream) removeBuilder(stream uint32) {
-	s.bmu.Lock()
-	defer s.bmu.Unlock()
-
-	delete(s.builders, chunk.Header.BasicHeader.StreamId)
 }

@@ -9,5 +9,16 @@ type Header struct {
 }
 
 func (h *Header) Read(r io.Reader) error {
-	return nil
+	if err := h.BasicHeader.Read(r); err != nil {
+		return err
+	}
+
+	h.MessageHeader.FormatId = h.BasicHeader.FormatId
+	if err := h.MessageHeader.Read(r); err != nil {
+		return err
+	}
+
+	if err := h.ExtendedTimestamp.Read(r); err != nil {
+		return err
+	}
 }
