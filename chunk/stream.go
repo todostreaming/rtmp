@@ -1,9 +1,7 @@
 package chunk
 
-import "io"
-
 type Stream struct {
-	reader     *Reader
+	reader     Reader
 	normalizer Normalizer
 
 	chunks chan *Chunk
@@ -11,10 +9,10 @@ type Stream struct {
 	closer chan struct{}
 }
 
-func NewStream(src io.Reader) *Stream {
+func NewStream(reader Reader, normalizer Normalizer) *Stream {
 	return &Stream{
-		reader:     NewReader(src, DefaultReadSize),
-		normalizer: NewNormalizer(),
+		reader:     reader,
+		normalizer: normalizer,
 		chunks:     make(chan *Chunk),
 		errs:       make(chan error),
 		closer:     make(chan struct{}),
@@ -27,7 +25,6 @@ func (s *Stream) Close()                { s.closer <- struct{}{} }
 
 func (s *Stream) Recv() {
 	go s.reader.Recv()
-	defer s.reader.Close()
 
 	for {
 		select {
@@ -37,7 +34,14 @@ func (s *Stream) Recv() {
 		case err := <-s.reader.Errs():
 			s.errs <- err
 		case <-s.closer:
-			break
+			s.reader.Close()
+
+			close(s.chunks)
+			close(s.errs)
+			close(s.closer)
+
+			return
 		}
 	}
+
 }
