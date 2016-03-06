@@ -4,7 +4,7 @@ import "io"
 
 type Stream struct {
 	reader     *Reader
-	normalizer *Normalizer
+	normalizer Normalizer
 
 	chunks chan *Chunk
 	errs   chan error
@@ -32,7 +32,8 @@ func (s *Stream) Recv() {
 	for {
 		select {
 		case chunk := <-s.reader.Chunks():
-			s.chunks <- s.normalizer.Normalize(chunk)
+			s.normalizer.Normalize(chunk)
+			s.chunks <- chunk
 		case err := <-s.reader.Errs():
 			s.errs <- err
 		case <-s.closer:
