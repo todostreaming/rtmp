@@ -1,6 +1,7 @@
 package chunk
 
 import (
+	"encoding/binary"
 	"io"
 	"sync"
 
@@ -8,7 +9,7 @@ import (
 )
 
 const (
-	// DefaultReadSize is the RTMP-defined default for chunk size, in bytes.
+	// DefaultReadSize is the RTMP-defined default for chunk size, in byter.
 	DefaultReadSize int = 128
 )
 
@@ -28,10 +29,10 @@ type Reader struct {
 	// once for one chunk.
 	readSize int
 
-	// chunks is the internal, non-buffered channel of chunks.
+	// chunks is the internal, non-buffered channel of chunkr.
 	chunks chan *Chunk
 	// errs is used to keep track of errors that occur during the decoding
-	// process.
+	// procesr.
 	errs chan error
 	// closer is a non-buffered channel used to pass closing signal around.
 	closer chan struct{}
@@ -51,31 +52,31 @@ func NewReader(src io.Reader, readSize int) *Reader {
 // Chunks provides a read-only channel used to consume complete, parsed, RTMP
 // chunks with. Chunks present in this channel are fully parsed. This channel is
 // not buffered.
-func (s *Stream) Chunks() <-chan *Chunk { return s.chunks }
+func (r *Reader) Chunks() <-chan *Chunk { return r.chunks }
 
 // Errs provides a read-only channel of errors that occurred during the parsing
-// process.
-func (s *Stream) Errs() <-chan error { return s.errs }
+// procesr.
+func (r *Reader) Errs() <-chan error { return r.errs }
 
 // Close causes the Recv goroutine to return.
-func (s *Stream) Close() { s.closer <- struct{}{} }
+func (r *Reader) Close() { r.closer <- struct{}{} }
 
 // ReadSize synchronously returns the maximum number of bytes that can be read
 // at once from the `src` stream.
-func (s *Stream) ReadSize() int {
-	s.rmu.Lock()
-	defer s.rmu.Unlock()
+func (r *Reader) ReadSize() int {
+	r.rmu.Lock()
+	defer r.rmu.Unlock()
 
-	return s.readSize
+	return r.readSize
 }
 
 // SetReadSize synchronously sets the maximum number of bytes that can be read
 // from the connection at once.
-func (s *Stream) SetReadSize(size int) {
-	s.rmu.Lock()
-	defer s.rmu.Unlock()
+func (r *Reader) SetReadSize(size int) {
+	r.rmu.Lock()
+	defer r.rmu.Unlock()
 
-	s.readSize = size
+	r.readSize = size
 }
 
 // Recv processes chunks from the input stream. It works by looping
@@ -86,35 +87,64 @@ func (s *Stream) SetReadSize(size int) {
 // If a chunk has been completely read, it is built and pushed over the channel.
 //
 // Recv runs within its own goroutine.
-func (s *Stream) Recv() {
+func (r *Reader) Recv() {
 	for {
 		select {
-		case <-s.closer:
+		case <-r.closer:
 			break
 		default:
 			header := new(Header)
-			if err := header.Read(s.src); err != nil {
-				s.errs <- err
+			if err := header.Read(r.src); err != nil {
+				r.errs <- err
 				continue
 			}
 
-			builder := s.builder(header)
-			n := spec.Min(builder.BytesLeft(), s.ReadSize())
+			builder := r.builder(header)
+			n := spec.Min(builder.BytesLeft(), r.ReadSize())
 
-			if err := builder.Read(s.src, n); err != nil {
-				s.errs <- err
+			if _, err := builder.Read(r.src, n); err != nil {
+				r.errs <- err
 				continue
 			}
 
 			if builder.BytesLeft() == 0 {
 				chunk := builder.Build()
 
-				if !s.updateChunkSize(chunk) {
-					s.chunks <- chunk
+				if !r.updateChunkSize(chunk) {
+					r.chunks <- chunk
 				}
 
-				s.removeBuilder(Header.BasicHeader.StreamId)
+				r.removeBuilder(header.BasicHeader.StreamId)
 			}
 		}
 	}
+}
+
+func (r *Reader) updateChunkSize(c *Chunk) bool {
+	if c.TypeId() != byte(0x01) {
+		return false
+	}
+
+	r.SetReadSize(int(binary.BigEndian.Uint32(c.Data)))
+
+	return true
+}
+
+func (r *Reader) builder(header *Header) *Builder {
+	r.bmu.Lock()
+	defer r.bmu.Unlock()
+
+	streamId := header.BasicHeader.StreamId
+	if r.builders[streamId] == nil {
+		r.builders[streamId] = NewBuilder(header)
+	}
+
+	return r.builders[streamId]
+}
+
+func (r *Reader) removeBuilder(streamId uint32) {
+	r.bmu.Lock()
+	defer r.bmu.Unlock()
+
+	delete(r.builders, streamId)
 }

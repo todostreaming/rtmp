@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewStreamReturnsNewStreams(t *testing.T) {
-	s := chunk.NewStream(new(bytes.Buffer), stream.DefaultReadSize)
+	s := chunk.NewStream(new(bytes.Buffer))
 
 	assert.IsType(t, &chunk.Stream{}, s)
 }

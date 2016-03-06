@@ -3,6 +3,7 @@ package chunk
 import (
 	"errors"
 	"io"
+	"sync"
 )
 
 var (
@@ -13,7 +14,22 @@ type Builder struct {
 	Header   *Header
 	Payloads [][]byte
 
+	lmu  sync.Mutex
 	left int
+}
+
+func (b *Builder) AddLeft(left int) {
+	b.lmu.Lock()
+	defer b.lmu.Unlock()
+
+	b.left += left
+}
+
+func (b *Builder) BytesLeft() int {
+	b.lmu.Lock()
+	defer b.lmu.Unlock()
+
+	return b.left
 }
 
 func NewBuilder(h *Header) *Builder {

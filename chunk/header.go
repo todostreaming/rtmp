@@ -21,4 +21,6 @@ func (h *Header) Read(r io.Reader) error {
 	if err := h.ExtendedTimestamp.Read(r); err != nil {
 		return err
 	}
+
+	return nil
 }

@@ -21,7 +21,7 @@ func (n *Normalizer) Normalize(c *Chunk) *Chunk {
 	lastSameStream := n.Header(c.StreamId())
 
 	n.fillPartialHeader(last.Header, c.Header)
-	n.fillEmptyHeader(lastSameStream.Header, c.Header)
+	n.fillEmptyHeader(lastSameStream, c.Header)
 
 	n.SetLast(c)
 	n.StoreHeader(c.Header)
@@ -47,7 +47,7 @@ func (n *Normalizer) Header(streamId uint32) *Header {
 	n.hmu.Lock()
 	defer n.hmu.Unlock()
 
-	return n.header[streamId]
+	return n.headers[streamId]
 }
 
 func (n *Normalizer) StoreHeader(h *Header) {
@@ -55,7 +55,7 @@ func (n *Normalizer) StoreHeader(h *Header) {
 	defer n.hmu.Unlock()
 
 	streamId := h.BasicHeader.StreamId
-	n.header[streamId] = h
+	n.headers[streamId] = h
 }
 
 func (n *Normalizer) fillPartialHeader(last *Header, h *Header) {
