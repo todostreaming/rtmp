@@ -1,6 +1,7 @@
 package chunk
 
 import (
+	"bytes"
 	"errors"
 	"io"
 
@@ -59,6 +60,30 @@ func (m *MessageHeader) Read(r io.Reader) error {
 		return nil
 	default:
 		return ErrUnknownFormatId
+	}
+
+	return nil
+}
+
+func (m *MessageHeader) Write(w io.Writer) error {
+	buf := new(bytes.Buffer)
+
+	switch m.FormatId {
+	case 0:
+		spec.PutUint24(m.Timestamp, buf)
+		spec.PutUint24(m.Length, buf)
+		spec.PutUint8(m.TypeId, buf)
+		spec.LittleEndianPutUint32(m.StreamId, buf)
+	case 1:
+		spec.PutUint24(m.Timestamp, buf)
+		spec.PutUint24(m.Length, buf)
+		spec.PutUint8(m.TypeId, buf)
+	case 2:
+		spec.PutUint24(m.Timestamp, buf)
+	}
+
+	if _, err := w.Write(buf.Bytes()); err != nil {
+		return err
 	}
 
 	return nil

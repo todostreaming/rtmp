@@ -29,3 +29,11 @@ func (t *ExtendedTimestamp) Read(r io.Reader) error {
 	t.Delta = spec.Uint32(buf)
 	return nil
 }
+
+func (t *ExtendedTimestamp) Write(w io.Writer) error {
+	if _, err := spec.PutUint32(t.Delta, w); err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -1,6 +1,7 @@
 package chunk_test
 
 import (
+	"bytes"
 	"errors"
 	"testing"
 	"time"
@@ -11,7 +12,7 @@ import (
 )
 
 func TestNewStreamReturnsNewStreams(t *testing.T) {
-	s := chunk.NewStream(&MockReader{}, nil)
+	s := chunk.NewStream(&MockReader{}, &MockWriter{}, nil)
 
 	assert.IsType(t, &chunk.Stream{}, s)
 }
@@ -26,7 +27,7 @@ func TestStreamPropogatesErrors(t *testing.T) {
 	reader.On("Errs").Return(errs)
 	reader.On("Close").Return()
 
-	s := chunk.NewStream(reader, chunk.NewNormalizer())
+	s := chunk.NewStream(reader, &MockWriter{}, chunk.NewNormalizer())
 	errs <- errors.New("testing: some error")
 
 	go s.Recv()
@@ -47,7 +48,7 @@ func TestStreamClosesAfterSignalSent(t *testing.T) {
 	reader.On("Errs").Return(errs)
 	reader.On("Close").Return().Once()
 
-	s := chunk.NewStream(reader, chunk.NewNormalizer())
+	s := chunk.NewStream(reader, &MockWriter{}, chunk.NewNormalizer())
 	go s.Recv()
 
 	s.Close()
@@ -69,13 +70,47 @@ func TestStreamNormalizesChunksAndSendsThem(t *testing.T) {
 	normalizer := &MockNormalizer{}
 	normalizer.On("Normalize", mock.Anything).Return().Once()
 
-	stream := chunk.NewStream(reader, normalizer)
+	stream := chunk.NewStream(reader, &MockWriter{}, normalizer)
 	go stream.Recv()
 
-	<-stream.Chunks()
+	<-stream.In()
 	stream.Close()
 	<-time.After(1 * time.Millisecond) // HACK: wait for all the things
 
 	reader.AssertExpectations(t)
 	normalizer.AssertExpectations(t)
+}
+
+func TestStreamWritesChunksToWriter(t *testing.T) {
+	writer := &MockWriter{}
+	writer.On("Write", mock.Anything).Return(nil)
+
+	stream := chunk.NewStream(
+		chunk.NewReader(new(bytes.Buffer), chunk.DefaultReadSize),
+		writer,
+		&MockNormalizer{},
+	)
+	go stream.Recv()
+
+	stream.Out() <- &chunk.Chunk{}
+
+	writer.AssertExpectations(t)
+}
+
+func TestStreamPropogatesWriteErrors(t *testing.T) {
+	writer := &MockWriter{}
+	writer.On("Write", mock.Anything).Return(errors.New("test: error"))
+
+	stream := chunk.NewStream(
+		chunk.NewReader(new(bytes.Buffer), chunk.DefaultReadSize),
+		writer,
+		&MockNormalizer{},
+	)
+	go stream.Recv()
+
+	stream.Out() <- &chunk.Chunk{}
+	err := <-stream.Errs()
+
+	assert.Equal(t, "test: error", err.Error())
+	writer.AssertExpectations(t)
 }

@@ -24,3 +24,21 @@ func (h *Header) Read(r io.Reader) error {
 
 	return nil
 }
+
+func (h *Header) Write(w io.Writer) error {
+	if err := h.BasicHeader.Write(w); err != nil {
+		return err
+	}
+
+	if err := h.MessageHeader.Write(w); err != nil {
+		return err
+	}
+
+	if h.MessageHeader.Timestamp == 0xffffff {
+		if err := h.ExtendedTimestamp.Write(w); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
