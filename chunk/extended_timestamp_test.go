@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/WatchBeam/rtmp/chunk"
+	"github.com/WatchBeam/rtmp/spec"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,4 +21,15 @@ func TestExtendedTimestampReadsCorrectly(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, time, e.Delta)
+}
+
+func TestExtendedTimestampWrite(t *testing.T) {
+	time := rand.Uint32()
+	e := &chunk.ExtendedTimestamp{time}
+
+	buf := new(bytes.Buffer)
+	err := e.Write(buf)
+
+	assert.Nil(t, err)
+	assert.Equal(t, time, spec.Uint32(buf.Bytes()))
 }
