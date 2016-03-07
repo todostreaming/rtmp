@@ -2,12 +2,48 @@ package chunk_test
 
 import (
 	"bytes"
-	"math/rand"
+	"fmt"
 	"testing"
 
 	"github.com/WatchBeam/rtmp/chunk"
 	"github.com/stretchr/testify/assert"
 )
+
+type MessageHeaderTestCase struct {
+	IdealBuffer []byte
+	Header      *chunk.MessageHeader
+}
+
+func (m *MessageHeaderTestCase) Assert(t *testing.T) {
+	m.assertRead(t)
+	m.assertWrite(t)
+}
+
+func (m *MessageHeaderTestCase) assertRead(t *testing.T) {
+	h := &chunk.MessageHeader{
+		FormatId: m.Header.FormatId,
+	}
+	err := h.Read(bytes.NewBuffer(m.IdealBuffer))
+
+	assert.Nil(t, err, "message header: read err should not exist")
+
+	assert.Equal(t, m.Header.FormatId, h.FormatId)
+	assert.Equal(t, m.Header.Timestamp, h.Timestamp)
+	assert.Equal(t, m.Header.TimestampDelta, h.TimestampDelta)
+	assert.Equal(t, m.Header.Length, h.Length)
+	assert.Equal(t, m.Header.TypeId, h.TypeId)
+	assert.Equal(t, m.Header.StreamId, h.StreamId)
+}
+
+func (m *MessageHeaderTestCase) assertWrite(t *testing.T) {
+	buf := new(bytes.Buffer)
+	err := m.Header.Write(buf)
+
+	assert.Nil(t, err)
+	assert.True(t, bytes.Equal(m.IdealBuffer, buf.Bytes()), fmt.Sprintf(
+		"message header: slice should be equal, wasn't (%v,%v)",
+		m.IdealBuffer, buf.Bytes()))
+}
 
 func TestMessageHeaderKnowsWhenMoreTimestampIsNeeded(t *testing.T) {
 	h := &chunk.MessageHeader{
@@ -17,37 +53,23 @@ func TestMessageHeaderKnowsWhenMoreTimestampIsNeeded(t *testing.T) {
 	assert.True(t, h.HasExtendedTimestamp())
 }
 
-type MessageHeaderTestCase struct {
-	Buffer  []byte
-	Control chunk.MessageHeader
-}
-
-func (c *MessageHeaderTestCase) Assert(t *testing.T) {
-	h := chunk.MessageHeader{
-		FormatId: c.Control.FormatId,
-	}
-	err := h.Read(bytes.NewBuffer(c.Buffer))
-
-	assert.Nil(t, err)
-	assert.Equal(t, c.Control, h)
-}
-
-func TestMessageHeaderTypeZeroReads(t *testing.T) {
+func TestMessageHeaderTypeZeroReadWrite(t *testing.T) {
 	timestamp := uint32(123423)
 	length := uint32(456152)
 	typeId := byte(7)
-	streamId := rand.Uint32()
+	streamId := uint32(12352)
 
 	buf := []byte{
 		byte(timestamp >> 16), byte(timestamp >> 8), byte(timestamp),
 		byte(length >> 16), byte(length >> 8), byte(length),
 		byte(typeId),
-		byte(streamId >> 24), byte(streamId >> 16), byte(streamId >> 8), byte(streamId),
+		byte(streamId >> 0), byte(streamId >> 8), byte(streamId >> 16),
+		byte(streamId >> 24),
 	}
 
 	c := &MessageHeaderTestCase{
-		Buffer: buf,
-		Control: chunk.MessageHeader{
+		IdealBuffer: buf,
+		Header: &chunk.MessageHeader{
 			FormatId:       0,
 			Timestamp:      timestamp,
 			TimestampDelta: false,
@@ -60,7 +82,7 @@ func TestMessageHeaderTypeZeroReads(t *testing.T) {
 	c.Assert(t)
 }
 
-func TestMessageHeaderTypeOneReads(t *testing.T) {
+func TestMessageHeaderTypeOneReadWrite(t *testing.T) {
 	timestamp := uint32(123423)
 	length := uint32(456152)
 	typeId := byte(7)
@@ -72,8 +94,8 @@ func TestMessageHeaderTypeOneReads(t *testing.T) {
 	}
 
 	c := &MessageHeaderTestCase{
-		Buffer: buf,
-		Control: chunk.MessageHeader{
+		IdealBuffer: buf,
+		Header: &chunk.MessageHeader{
 			FormatId:       1,
 			Timestamp:      timestamp,
 			TimestampDelta: true,
@@ -85,15 +107,15 @@ func TestMessageHeaderTypeOneReads(t *testing.T) {
 	c.Assert(t)
 }
 
-func TestMessageHeaderTypeTwoReads(t *testing.T) {
+func TestMessageHeaderTypeTwoReadWrite(t *testing.T) {
 	timestamp := uint32(123423)
 	buf := []byte{
 		byte(timestamp >> 16), byte(timestamp >> 8), byte(timestamp),
 	}
 
 	c := &MessageHeaderTestCase{
-		Buffer: buf,
-		Control: chunk.MessageHeader{
+		IdealBuffer: buf,
+		Header: &chunk.MessageHeader{
 			FormatId:       2,
 			Timestamp:      timestamp,
 			TimestampDelta: true,

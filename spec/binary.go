@@ -17,6 +17,10 @@ func Uint32(b []byte) uint32 {
 	return DefaultEndianness.Uint32(pad(b, 4))
 }
 
+func LittleEndianUint32(b []byte) uint32 {
+	return binary.LittleEndian.Uint32(padl(b, 4))
+}
+
 func Uint64(b []byte) uint64 {
 	return DefaultEndianness.Uint64(pad(b, 8))
 }
@@ -58,4 +62,8 @@ func LittleEndianPutUint32(n uint32, w io.Writer) (int, error) {
 
 func pad(b []byte, n int) []byte {
 	return append(make([]byte, n-len(b)), b...)
+}
+
+func padl(b []byte, n int) []byte {
+	return append(b, make([]byte, n-len(b))...)
 }
