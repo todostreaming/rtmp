@@ -43,18 +43,14 @@ func (h *BasicHeader) Read(r io.Reader) error {
 
 func (h *BasicHeader) Write(w io.Writer) error {
 	buf := make([]byte, 1)
-	buf[0] = b.FormatId << 6
-
-	var csId byte
+	buf[0] = h.FormatId << 6
 
 	switch {
 	case h.StreamId < 64:
 		buf[0] |= (byte(h.StreamId) & 63)
 	case h.StreamId < 320:
-		csId = 1
 		buf = append(buf, byte(h.StreamId-64))
 	default:
-		csId = 2
 
 		tmp := new(bytes.Buffer)
 		if _, err := spec.PutUint16(uint16(h.StreamId-64), tmp); err !=
@@ -63,10 +59,9 @@ func (h *BasicHeader) Write(w io.Writer) error {
 			return err
 		}
 
+		buf[0] |= 63
 		buf = append(buf, tmp.Bytes()...)
 	}
-
-	buf[0] |= csId
 
 	if _, err := w.Write(buf); err != nil {
 		return err

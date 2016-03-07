@@ -38,6 +38,8 @@ func PutUint24(n uint32, w io.Writer) (int, error) {
 		byte((n >> 8) & 0xff),
 		byte((n >> 0) & 0xff),
 	}
+
+	return w.Write(buf)
 }
 
 func PutUint32(n uint32, w io.Writer) (int, error) {

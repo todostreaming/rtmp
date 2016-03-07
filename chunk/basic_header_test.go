@@ -2,37 +2,72 @@ package chunk_test
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/WatchBeam/rtmp/chunk"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBasicHeaderTypeOneRead(t *testing.T) {
-	h := new(chunk.BasicHeader)
-	h.Read(bytes.NewBuffer([]byte{
-		(0x02 << 6) | 23,
-	}))
-
-	assert.Equal(t, byte(2), h.FormatId)
-	assert.Equal(t, uint32(23), h.StreamId)
+type BasicHeaderTestCase struct {
+	IdealBuffer []byte
+	Header      *chunk.BasicHeader
 }
 
-func TestBasicHeaderTypeTwoRead(t *testing.T) {
-	h := new(chunk.BasicHeader)
-	h.Read(bytes.NewBuffer([]byte{
-		(0x02 << 6) | 0, 23,
-	}))
-
-	assert.Equal(t, byte(2), h.FormatId)
-	assert.Equal(t, uint32(23+64), h.StreamId)
+func (b *BasicHeaderTestCase) Assert(t *testing.T) {
+	b.assertRead(t)
+	b.assertWrite(t)
 }
 
-func TestBasicHeaderTypeThreeRead(t *testing.T) {
+func (b *BasicHeaderTestCase) assertRead(t *testing.T) {
 	h := new(chunk.BasicHeader)
-	h.Read(bytes.NewBuffer([]byte{
-		(0x02 << 6) | 63, byte(255 >> 8), 255,
-	}))
-	assert.Equal(t, byte(2), h.FormatId)
-	assert.Equal(t, uint32(255+64), h.StreamId)
+	h.Read(bytes.NewBuffer(b.IdealBuffer))
+
+	assert.Equal(t, b.Header.FormatId, h.FormatId,
+		"chunk: basic header format ID should be equal, wasn't")
+	assert.Equal(t, b.Header.StreamId, h.StreamId,
+		"chunk: basic header stream ID should be equal, wasn't")
+}
+
+func (b *BasicHeaderTestCase) assertWrite(t *testing.T) {
+	buf := new(bytes.Buffer)
+	err := b.Header.Write(buf)
+
+	assert.Nil(t, err, "chunk: writing should return no error, did")
+	assert.True(t, bytes.Equal(b.IdealBuffer, buf.Bytes()), fmt.Sprintf(
+		"chunk: basic header output should be equal, wasn't (%v,%v)",
+		b.IdealBuffer, buf.Bytes()))
+}
+
+func TestBasicHeaderReadWrite(t *testing.T) {
+	for _, c := range []BasicHeaderTestCase{
+		{
+			IdealBuffer: []byte{
+				(0x02 << 6) | 23,
+			},
+			Header: &chunk.BasicHeader{
+				FormatId: 2,
+				StreamId: 23,
+			},
+		}, {
+			IdealBuffer: []byte{
+				(0x02 << 6) | 0, 23,
+			},
+			Header: &chunk.BasicHeader{
+				FormatId: 2,
+				StreamId: 23 + 64,
+			},
+		}, {
+			IdealBuffer: []byte{
+				(0x02 << 6) | 63, byte(330 >> 8),
+				byte(uint32(330>>0) & 0xff),
+			},
+			Header: &chunk.BasicHeader{
+				FormatId: 2,
+				StreamId: 330 + 64,
+			},
+		},
+	} {
+		c.Assert(t)
+	}
 }
