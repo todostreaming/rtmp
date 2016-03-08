@@ -3,7 +3,6 @@ package chunk
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 
 	"github.com/WatchBeam/rtmp/spec"
@@ -31,7 +30,6 @@ func (m *MessageHeader) Read(r io.Reader) error {
 	case 0:
 		buf, err := spec.ReadBytes(r, 11)
 		if err != nil {
-			fmt.Println("A")
 			return err
 		}
 
@@ -43,7 +41,6 @@ func (m *MessageHeader) Read(r io.Reader) error {
 	case 1:
 		buf, err := spec.ReadBytes(r, 7)
 		if err != nil {
-			fmt.Println("B")
 			return err
 		}
 
@@ -54,7 +51,6 @@ func (m *MessageHeader) Read(r io.Reader) error {
 	case 2:
 		buf, err := spec.ReadBytes(r, 3)
 		if err != nil {
-			fmt.Println("C")
 			return err
 		}
 

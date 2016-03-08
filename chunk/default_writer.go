@@ -37,14 +37,15 @@ func (w *DefaultWriter) Write(c *Chunk) error {
 	}
 
 	payload := bytes.NewBuffer(c.Data)
-	for len := payload.Len(); len > 0; {
+	for payload.Len() > 0 {
+		len := payload.Len()
 		n := spec.Min(len, w.writeSize)
 		if _, err := io.CopyN(w.dest, payload, int64(n)); err != nil {
 			return err
 		}
 
 		// HACK(taylor): move this up to the chunk level
-		if len > 0 {
+		if payload.Len() > 0 {
 			partialHeader := []byte{byte(
 				(3 << 6) | (c.Header.BasicHeader.StreamId & 63)),
 			}

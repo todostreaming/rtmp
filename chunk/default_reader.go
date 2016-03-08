@@ -72,7 +72,7 @@ func (r *DefaultReader) Recv() {
 	for {
 		select {
 		case <-r.closer:
-			break
+			return
 		default:
 			header := new(Header)
 			if err := header.Read(r.src); err != nil {

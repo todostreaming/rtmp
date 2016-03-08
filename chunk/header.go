@@ -18,8 +18,10 @@ func (h *Header) Read(r io.Reader) error {
 		return err
 	}
 
-	if err := h.ExtendedTimestamp.Read(r); err != nil {
-		return err
+	if h.MessageHeader.HasExtendedTimestamp() {
+		if err := h.ExtendedTimestamp.Read(r); err != nil {
+			return err
+		}
 	}
 
 	return nil
