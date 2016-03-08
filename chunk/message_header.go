@@ -9,22 +9,42 @@ import (
 )
 
 var (
+	// ErrUnknownFormatId is returned in a situation where the Format ID
+	// belonging to an attempted read of a MessageHeader is not included
+	// within the RTMP specification.
 	ErrUnknownFormatId = errors.New("rtmp: unknown message header ID")
 )
 
+// MessageHeader represents the MessageHeader component of a chunk Header, as
+// defined in the RTMP specification.
 type MessageHeader struct {
-	FormatId       byte
-	Timestamp      uint32
+	// FormatId is the FormatId of the Message header (should it be
+	// read from or written to a chunk stream). It must be set from the
+	// BasicHeader's FormatId elsewhere.
+	FormatId byte
+	// Timestamp is the 4-byte (perhaps partial) encoding of the timestamp
+	// (or delta, if TimestampDelta field is true).
+	Timestamp uint32
+	// TimestampDelta is a bool that tells callers whether or not the
+	// Timestamp field is a absolute, or relative timestamp.
 	TimestampDelta bool
-	Length         uint32
-	TypeId         byte
-	StreamId       uint32
+	// Length is the length in bytes of the associated chunk's payload.
+	Length uint32
+	// TypeId is the RTMP typeId as defined by the RTMP specification.
+	TypeId byte
+	// StreamId is the ID of the chunk stream that this header's chunk
+	// belongs to.
+	StreamId uint32
 }
 
+// HasExtendedTimestamp determines whether or not an ExtendedTimestamp header is
+// necessary to encode the full timestamp.
 func (m *MessageHeader) HasExtendedTimestamp() bool {
 	return m.Timestamp == 0xffffff
 }
 
+// Read reads a type 0, 1, 2, or 3-format MessageHeader from the given
+// io.Reader, using a process as defined in the RTMP specification.
 func (m *MessageHeader) Read(r io.Reader) error {
 	switch m.FormatId {
 	case 0:
@@ -65,6 +85,8 @@ func (m *MessageHeader) Read(r io.Reader) error {
 	return nil
 }
 
+// Write encodes and writes the data held by this MessageHeader to the given
+// io.Writer, returning any error encountered during the write as it occurs.
 func (m *MessageHeader) Write(w io.Writer) error {
 	buf := new(bytes.Buffer)
 

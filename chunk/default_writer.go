@@ -8,15 +8,21 @@ import (
 	"github.com/WatchBeam/rtmp/spec"
 )
 
+// DefaultWriter provides a default implementation of chunk.Writer interface.
 type DefaultWriter struct {
+	// dest is the io.Writer where chunks are written to.
 	dest io.Writer
 
-	wmu       sync.Mutex
+	// wmu guards writeSize.
+	wmu sync.Mutex
+	// writeSize is the maximum payload length of a single chunk that can
+	// be written without haveing to write multiple chunks.
 	writeSize int
 }
 
 var _ Writer = new(DefaultWriter)
 
+// WriteSize implements the WriteSize function defined in the Writer interface.
 func (w *DefaultWriter) WriteSize() int {
 	w.wmu.Lock()
 	defer w.wmu.Unlock()
@@ -24,6 +30,7 @@ func (w *DefaultWriter) WriteSize() int {
 	return w.writeSize
 }
 
+// SetWriteSize implements the SetWriteSize function defined in the Writer interface.
 func (w *DefaultWriter) SetWriteSize(writeSize int) {
 	w.wmu.Lock()
 	defer w.wmu.Unlock()
@@ -31,6 +38,7 @@ func (w *DefaultWriter) SetWriteSize(writeSize int) {
 	w.writeSize = writeSize
 }
 
+// Write implements the Write function defined in the Writer interface.
 func (w *DefaultWriter) Write(c *Chunk) error {
 	if err := c.Header.Write(w.dest); err != nil {
 		return err
