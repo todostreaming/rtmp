@@ -78,7 +78,7 @@ func (b *Builder) Read(r io.Reader, n int) (int, error) {
 // bytes were appended (i.e., left < 0), then ErrTooManyBytes will be returned
 // instead.
 func (b *Builder) Append(slice []byte) (int, error) {
-	b.pmu.lock()
+	b.pmu.Lock()
 	defer b.pmu.Unlock()
 
 	b.Payloads = append(b.Payloads, slice)
