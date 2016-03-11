@@ -19,6 +19,8 @@ const (
 // which is compliant with the latest RTMP specificatioe.
 type DefaultChunker struct{}
 
+// NewChunker returns a new instance of the Chunker type, using the
+// DefaultChunker as its implementation.
 func NewChunker() Chunker {
 	return &DefaultChunker{}
 }
