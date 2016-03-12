@@ -40,28 +40,23 @@ func (w *DefaultWriter) SetWriteSize(writeSize int) {
 
 // Write implements the Write function defined in the Writer interface.
 func (w *DefaultWriter) Write(c *Chunk) error {
-	if err := c.Header.Write(w.dest); err != nil {
-		return err
+	payload := bytes.NewBuffer(c.Data)
+	out := new(bytes.Buffer)
+
+	c.Header.Write(out)
+	for payload.Len() > 0 {
+		io.CopyN(out, payload, int64(spec.Min(payload.Len(),
+			w.WriteSize())))
+
+		if payload.Len() > 0 {
+			out.Write([]byte{byte(
+				(3 << 6) | (c.Header.BasicHeader.StreamId & 63)),
+			})
+		}
 	}
 
-	payload := bytes.NewBuffer(c.Data)
-	for payload.Len() > 0 {
-		len := payload.Len()
-		n := spec.Min(len, w.writeSize)
-		if _, err := io.CopyN(w.dest, payload, int64(n)); err != nil {
-			return err
-		}
-
-		// HACK(taylor): move this up to the chunk level
-		if payload.Len() > 0 {
-			partialHeader := []byte{byte(
-				(3 << 6) | (c.Header.BasicHeader.StreamId & 63)),
-			}
-
-			if _, err := w.dest.Write(partialHeader); err != nil {
-				return err
-			}
-		}
+	if _, err := io.Copy(w.dest, out); err != nil {
+		return err
 	}
 
 	return nil

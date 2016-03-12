@@ -30,14 +30,14 @@ func (h *BasicHeader) Read(r io.Reader) error {
 
 	h.FormatId = b >> 6
 
-	if b&63 == 63 {
+	if b&0x3f == 0x3f {
 		tail, err := spec.ReadBytes(r, int(2))
 		if err != nil {
 			return err
 		}
 
 		h.StreamId = spec.Uint32(tail) + 64
-	} else if b&63 == 0 {
+	} else if b&0x3f == 0 {
 		tail, err := spec.ReadBytes(r, int(1))
 		if err != nil {
 			return err
@@ -45,7 +45,7 @@ func (h *BasicHeader) Read(r io.Reader) error {
 
 		h.StreamId = spec.Uint32(tail) + 64
 	} else {
-		h.StreamId = spec.Uint32([]byte{b & 63})
+		h.StreamId = spec.Uint32([]byte{b & 0x3f})
 	}
 
 	return nil
@@ -59,7 +59,7 @@ func (h *BasicHeader) Write(w io.Writer) error {
 
 	switch {
 	case h.StreamId < 64:
-		buf[0] |= (byte(h.StreamId) & 63)
+		buf[0] |= (byte(h.StreamId) & 0x3f)
 	case h.StreamId < 320:
 		buf = append(buf, byte(h.StreamId-64))
 	default:
