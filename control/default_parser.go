@@ -21,7 +21,8 @@ func (e UnknownControlType) Error() string {
 
 // DefaultParser provides a default implementation of the Parser type.
 type DefaultParser struct {
-	controls []Control
+	// controls maps control sequence IDs to their respective reflect.Type
+	controls map[byte]reflect.Type
 }
 
 var _ Parser = new(DefaultParser)
@@ -29,7 +30,15 @@ var _ Parser = new(DefaultParser)
 // NewParser returns a new instance of the Parser type (using the DefaultParser
 // implementation) initialized with the Controls variable.
 func NewParser() *DefaultParser {
-	return &DefaultParser{controls: Controls}
+	p := &DefaultParser{
+		controls: make(map[byte]reflect.Type),
+	}
+
+	for _, c := range Controls {
+		p.controls[c.TypeId()] = reflect.TypeOf(c).Elem()
+	}
+
+	return p
 }
 
 // Parse implements the Parse function as defined in the Parser interface.
@@ -52,13 +61,5 @@ func (p *DefaultParser) Parse(chunk *chunk.Chunk) (Control, error) {
 // TypeFor returns the de-referenced reflect.Type assosicated with a given
 // Control Sequence ID. If no matching type is found, nil is returned instead.
 func (p *DefaultParser) TypeFor(id byte) reflect.Type {
-	for _, c := range p.controls {
-		if c.TypeId() != id {
-			continue
-		}
-
-		return reflect.TypeOf(c).Elem()
-	}
-
-	return nil
+	return p.controls[id]
 }
