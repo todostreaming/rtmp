@@ -6,8 +6,8 @@ import "github.com/WatchBeam/rtmp/chunk"
 // sequences. It parses control sequences out of a chunk.Stream, and writes them
 // back when they are sent into the stream.
 type Stream struct {
-	// chunks is the chunk.Stream that is written to, and read from.
-	chunks *chunk.Stream
+	stream *chunk.Stream
+	writer chunk.Writer
 
 	in     chan Control
 	out    chan Control
@@ -20,9 +20,12 @@ type Stream struct {
 
 // NewStream returns a new instance of the Stream type initialized with the
 // given chunk stream, parser, and chunker.
-func NewStream(stream *chunk.Stream, parser Parser, chunker Chunker) *Stream {
+func NewStream(stream *chunk.Stream, writer chunk.Writer,
+	parser Parser, chunker Chunker) *Stream {
+
 	return &Stream{
-		chunks: stream,
+		stream: stream,
+		writer: writer,
 
 		in:     make(chan Control),
 		out:    make(chan Control),
@@ -64,7 +67,7 @@ func (s *Stream) Recv() {
 		select {
 		case <-s.closer:
 			return
-		case c := <-s.chunks.In():
+		case c := <-s.stream.In():
 			control, err := s.parser.Parse(c)
 			if err != nil {
 				s.errs <- err
@@ -79,9 +82,10 @@ func (s *Stream) Recv() {
 				continue
 			}
 
-			s.chunks.Out() <- chunk
-		case err := <-s.chunks.Errs():
-			s.errs <- err
+			if err = s.writer.Write(chunk); err != nil {
+				s.errs <- err
+				continue
+			}
 		}
 	}
 }
