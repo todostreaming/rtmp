@@ -21,7 +21,7 @@ func TestServerFailsWithInvalidBind(t *testing.T) {
 	s, err := server.New("256.256.256.256:1234")
 
 	assert.IsType(t, &server.Server{}, s)
-	assert.NotNil(t, err.Error())
+	assert.NotNil(t, err)
 }
 
 func TestListenGetsNewClients(t *testing.T) {
