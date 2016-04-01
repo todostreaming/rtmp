@@ -5,6 +5,7 @@ import (
 
 	"github.com/WatchBeam/rtmp/chunk"
 	"github.com/WatchBeam/rtmp/control"
+	"github.com/WatchBeam/rtmp/handshake"
 )
 
 // Client represents a client connected to a RTMP server (see
@@ -44,6 +45,17 @@ func New(conn io.ReadWriter) *Client {
 
 		Conn: conn,
 	}
+}
+
+// Handshake preforms the handshake operation against the connecting client. If
+// an error is encountered during any point of the handshake process, it will be
+// returned immediately.
+//
+// See github.com/WatchBeam/RTMP/handshake for details.
+func (c *Client) Handshake() error {
+	return handshake.With(&handshake.Param{
+		Conn: c.Conn,
+	}).Handshake()
 }
 
 // Controls returns the stream of control sequences that are being received
