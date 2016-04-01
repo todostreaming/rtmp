@@ -1,7 +1,6 @@
 package handshake
 
 import (
-	"bytes"
 	"encoding/binary"
 	"io"
 )
@@ -45,19 +44,15 @@ func (a *AckPacket) Read(r io.Reader) error {
 // If an error is encountered during any of these writes, the error is returned
 // immediately.
 func (a *AckPacket) Write(w io.Writer) error {
-	buf := new(bytes.Buffer)
-
-	if err := binary.Write(buf, binary.BigEndian, a.Time1); err != nil {
+	if err := binary.Write(w, binary.BigEndian, a.Time1); err != nil {
 		return err
 	}
 
-	if err := binary.Write(buf, binary.BigEndian, a.Time2); err != nil {
+	if err := binary.Write(w, binary.BigEndian, a.Time2); err != nil {
 		return err
 	}
 
-	buf.Write(a.Payload[:])
-
-	if _, err := buf.WriteTo(w); err != nil {
+	if _, err := w.Write(a.Payload[:]); err != nil {
 		return err
 	}
 
