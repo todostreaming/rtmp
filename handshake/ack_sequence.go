@@ -15,7 +15,7 @@ var (
 
 type AckSequence struct {
 	// S1Payload is the payload sent during S1.
-	S1Payload [1528]byte
+	S1Payload [PayloadLen]byte
 
 	// C1 and C2 are read during the Read operation and represent the first
 	// and second packets sent back from the client during the Ack sequence.
@@ -27,7 +27,7 @@ var _ Sequence = new(AckSequence)
 // NewAckSequence instantiates and returns a pointer to a new instance of the
 // AckSequence type. The returned AckSequence is initialized with the S1Payload,
 // as well as zero-value instances for C1 and C2.
-func NewAckSequence(s1Payload [1528]byte) *AckSequence {
+func NewAckSequence(s1Payload [PayloadLen]byte) *AckSequence {
 	return &AckSequence{
 		S1Payload: s1Payload,
 		C1:        new(AckPacket),

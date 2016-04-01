@@ -34,7 +34,7 @@ func TestItWritesVersionAndS1(t *testing.T) {
 
 	assert.Nil(t, v.Write(buf))
 	assert.Equal(t, []byte{0x3}, buf.Bytes()[:1])
-	assert.Len(t, buf.Bytes(), 1+4+4+1528)
+	assert.Len(t, buf.Bytes(), 1+4+4+handshake.PayloadLen)
 }
 
 func TestItReturnsAnInitializedAckSequence(t *testing.T) {

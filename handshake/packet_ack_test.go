@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func RandomPayload() [1528]byte {
-	var payload [1528]byte
+func RandomPayload() [handshake.PayloadLen]byte {
+	var payload [handshake.PayloadLen]byte
 
 	rand.Read(payload[:])
 

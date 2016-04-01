@@ -5,6 +5,10 @@ import (
 	"io"
 )
 
+const (
+	PayloadLen int = 1528
+)
+
 // AckPacket represents the RTMP packet used in communicating and agreeing upon
 // data during the handshake process. It encapsulates three fields, two of which
 // are _usually_ used for sending timestamps (epochs), and the third which is
@@ -18,7 +22,7 @@ type AckPacket struct {
 	Time2 uint32
 	// Payload is the challenge payload that is sent back and forth between
 	// the client and the server to agree that they are speaking securely.
-	Payload [1528]byte
+	Payload [PayloadLen]byte
 }
 
 // Read reads the encoded data representing an AckPacket from the given

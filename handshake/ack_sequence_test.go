@@ -9,7 +9,7 @@ import (
 )
 
 func TestAckSequenceConstruction(t *testing.T) {
-	var payload [1528]byte
+	var payload [handshake.PayloadLen]byte
 	a := handshake.NewAckSequence(payload)
 
 	assert.IsType(t, new(handshake.AckSequence), a)
@@ -54,7 +54,7 @@ func TestAckSequenceWritesC1Payload(t *testing.T) {
 }
 
 func TestAckSequenceHasNoNext(t *testing.T) {
-	var payload [1528]byte
+	var payload [handshake.PayloadLen]byte
 	a := handshake.NewAckSequence(payload)
 
 	next := a.Next()
