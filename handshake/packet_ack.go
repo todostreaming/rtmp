@@ -33,7 +33,7 @@ func (a *AckPacket) Read(r io.Reader) error {
 		return err
 	}
 
-	if _, err := r.Read(a.Payload[:]); err != nil {
+	if _, err := io.ReadFull(r, a.Payload[:]); err != nil {
 		return err
 	}
 
