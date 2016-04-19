@@ -1,6 +1,15 @@
 package chunk
 
-import "io"
+import (
+	"io"
+	"io/ioutil"
+)
+
+var (
+	// NoopWriter is a singleton that implements the chunk.Writer interface,
+	// while simultaneously discarding all writes to /dev/null.
+	NoopWriter Writer = NewWriter(ioutil.Discard, DefaultReadSize)
+)
 
 // Writer represents an interface capable of chunking and writing RTMP Chunks
 // according to a given (mutable) WriteSize.
