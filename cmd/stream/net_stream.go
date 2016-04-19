@@ -76,8 +76,6 @@ func (n *NetStream) Errs() <-chan error { return n.errs }
 // Listen routine has entered a closing state. Should this function be called
 // while a parse or send operation is taking place, then that operation will
 // finish before the close operation takes place immediately afterwords.
-//
-// Closed NetStreams may be reopened in the future.
 func (n *NetStream) Close() { n.closer <- struct{}{} }
 
 // Listen loops infinitely, managing the incoming and outgoing channel of chunks
@@ -87,12 +85,20 @@ func (n *NetStream) Close() { n.closer <- struct{}{} }
 //  - Parse incoming chunks, returning errors when they are unparsable.
 //  - Serialize outgoing `onStatus` commands, returning an error when they are
 //    either unserializable, or unwriteable.
-//  - Respond to the `Close()` operation.
+//  - Respond to the `Close()` operation by closing all output channels.
 //
 // Listen runs within its own goroutine, and any errors encountered while
 // running are sent over the internal errs channel, accessible from the `Errs()`
 // function.
 func (n *NetStream) Listen() {
+	defer func() {
+		close(n.statuses)
+		close(n.in)
+		close(n.errs)
+		close(n.closer)
+	}()
+
+L:
 	for {
 		select {
 		case chunk := <-n.chunks:
@@ -114,7 +120,7 @@ func (n *NetStream) Listen() {
 				n.errs <- err
 			}
 		case <-n.closer:
-			return
+			break L
 		}
 	}
 }
