@@ -10,9 +10,8 @@ import (
 
 func TestNewConstructsNewClients(t *testing.T) {
 	b := new(bytes.Buffer)
-	c, err := client.New(b)
+	c := client.New(b)
 
 	assert.IsType(t, &client.Client{}, c)
-	assert.Nil(t, err)
 	assert.Equal(t, b, c.Conn)
 }

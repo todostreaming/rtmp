@@ -80,12 +80,6 @@ func (s *Server) Accept() {
 			continue
 		}
 
-		client, err := client.New(conn)
-		if err != nil {
-			s.errs <- err
-			continue
-		}
-
-		s.clients <- client
+		s.clients <- client.New(conn)
 	}
 }
