@@ -2,6 +2,7 @@ package chunk_test
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 
@@ -76,10 +77,53 @@ func TestStreamNormalizesChunksAndSendsThem(t *testing.T) {
 	parser := chunk.NewParser(reader, normalizer)
 	go parser.Recv()
 
-	<-parser.Stream(2).In()
+	stream, err := parser.Stream(2)
+	assert.Nil(t, err)
+	<-stream.In()
+
 	parser.Close()
 	<-time.After(1 * time.Millisecond) // HACK: wait for all the things
 
 	reader.AssertExpectations(t)
 	normalizer.AssertExpectations(t)
+}
+
+func TestParserReturnsNewSingleChunkStreams(t *testing.T) {
+	parser := chunk.NewParser(nil, nil)
+
+	stream, err := parser.Stream(1)
+
+	assert.NotNil(t, stream)
+	assert.Nil(t, err)
+}
+
+func TestParserReturnsConsistentChunkStreams(t *testing.T) {
+	parser := chunk.NewParser(nil, nil)
+
+	s1, _ := parser.Stream(1)
+	s2, _ := parser.Stream(1)
+
+	assert.True(t,
+		reflect.ValueOf(s1).Pointer() == reflect.ValueOf(s2).Pointer(),
+		"rtmp/chunk: parser should return identical streams, but pointer values differed")
+}
+
+func TestParserReturnsMultiStreamsWhenNoStreamsAlreadyExist(t *testing.T) {
+	parser := chunk.NewParser(nil, nil)
+
+	stream, err := parser.Stream(1, 2, 3)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, stream)
+}
+
+func TestParserDoesNotReturnMultiStreamsWhenStreamsAlreadyExist(t *testing.T) {
+	parser := chunk.NewParser(nil, nil)
+
+	parser.Stream(1) // take out stream ID 1
+
+	multiStream, err := parser.Stream(1, 2)
+
+	assert.Nil(t, multiStream)
+	assert.Equal(t, "rtmp/chunk: stream 1 already exists", err.Error())
 }

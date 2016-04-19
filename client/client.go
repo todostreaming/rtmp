@@ -25,26 +25,31 @@ type Client struct {
 
 // New instantiates and returns a pointer to a new instance of type Client. The
 // client is initialized with the given connection.
-func New(conn io.ReadWriter) *Client {
+func New(conn io.ReadWriter) (*Client, error) {
 	chunkWriter := chunk.NewWriter(conn, chunk.DefaultReadSize)
 	chunks := chunk.NewParser(
 		chunk.NewReader(conn, chunk.DefaultReadSize),
 		chunk.NewNormalizer(),
 	)
 
+	controlChunks, err := chunks.Stream(2)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Client{
 		chunks:      chunks,
 		chunkWriter: chunkWriter,
 
 		controlStream: control.NewStream(
-			chunks.Stream(2),
+			controlChunks,
 			chunkWriter,
 			control.NewParser(),
 			control.NewChunker(),
 		),
 
 		Conn: conn,
-	}
+	}, nil
 }
 
 // Handshake preforms the handshake operation against the connecting client. If

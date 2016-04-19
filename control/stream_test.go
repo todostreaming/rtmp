@@ -23,7 +23,7 @@ var (
 	}
 )
 
-func newStreamWithChunk(streamId uint32, chunks ...*chunk.Chunk) *chunk.Stream {
+func newStreamWithChunk(streamId uint32, chunks ...*chunk.Chunk) chunk.Stream {
 	buf := new(bytes.Buffer)
 	for _, c := range chunks {
 		chunk.NewWriter(buf, chunk.DefaultReadSize).Write(c)
@@ -34,7 +34,8 @@ func newStreamWithChunk(streamId uint32, chunks ...*chunk.Chunk) *chunk.Stream {
 		chunk.NewNormalizer())
 	go parser.Recv()
 
-	return parser.Stream(streamId)
+	st, _ := parser.Stream(streamId)
+	return st
 }
 
 func TestStreamConstruction(t *testing.T) {
