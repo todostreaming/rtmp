@@ -34,6 +34,8 @@ type Parser struct {
 
 	// smu guards streams
 	smu sync.Mutex
+	// wg waits for the Recv loop to complete itself.
+	wg sync.WaitGroup
 	// streams maps chunk stream IDs (contained in the basic header of all
 	// chunks) to their appropriate chunk Stream
 	streams map[uint32]*Stream
@@ -83,7 +85,7 @@ func (p *Parser) Errs() <-chan error { return p.errs }
 
 // Close halts the read/normalize process from all chunk streams and closes each
 // "child" input channel of all `Stream`s.
-func (p *Parser) Close() { p.closer <- struct{}{} }
+func (p *Parser) Close() { p.closer <- struct{}{}; p.wg.Wait() }
 
 // Recv is responsible for processing the chunks coming off of the underlying
 // chunk.Reader. It first normalizes them and then places them onto the
@@ -93,6 +95,9 @@ func (p *Parser) Close() { p.closer <- struct{}{} }
 //
 // Recv runs within its own goroutine.
 func (p *Parser) Recv() {
+	p.wg.Add(1)
+	defer p.wg.Done()
+
 	go p.reader.Recv()
 
 	for {
