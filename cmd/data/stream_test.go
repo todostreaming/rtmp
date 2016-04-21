@@ -11,13 +11,13 @@ import (
 )
 
 func TestNewStreamConstructsNewStreams(t *testing.T) {
-	s := data.NewStream()
+	s := data.NewStream(make(chan *chunk.Chunk))
 
 	assert.IsType(t, new(data.Stream), s)
 }
 
 func TestRecvPushesDataWhenSuccessful(t *testing.T) {
-	s := data.NewStream()
+	s := data.NewStream(make(chan *chunk.Chunk))
 
 	parser := &MockParser{}
 	parser.On("Parse", mock.Anything).Return(new(data.Audio), nil).Once()
@@ -31,7 +31,7 @@ func TestRecvPushesDataWhenSuccessful(t *testing.T) {
 }
 
 func TestRecvEmitsAnErrorWhenNotSuccessful(t *testing.T) {
-	s := data.NewStream()
+	s := data.NewStream(make(chan *chunk.Chunk))
 
 	parser := &MockParser{}
 	parser.On("Parse", mock.Anything).Return(nil, errors.New("foo")).Once()
