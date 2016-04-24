@@ -2,9 +2,14 @@ package chunk_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/WatchBeam/rtmp/chunk"
 	"github.com/stretchr/testify/assert"
+)
+
+const (
+	CHAN_CLOSE_TIMEOUT = 100 * time.Millisecond
 )
 
 func TestMultiStreamAppendsMultipleChunkStreams(t *testing.T) {
@@ -24,6 +29,39 @@ func TestMultiStreamAppendsMultipleChunkStreams(t *testing.T) {
 
 	assert.Equal(t, o2, <-ms.In())
 	assert.Equal(t, o1, <-ms.In())
+}
+
+func TestAwaitCloseWaitsForAllChildrenToClose(t *testing.T) {
+	done := make(chan bool)
+
+	s1, c1 := newMockStream()
+	s2, c2 := newMockStream()
+
+	multi := chunk.NewMultiStream()
+	multi.Append(s1, s2)
+
+	go func() {
+		multi.AwaitClose()
+		done <- true
+	}()
+
+	close(c1)
+
+	select {
+	case <-time.After(CHAN_CLOSE_TIMEOUT):
+	case <-done:
+		t.Fatal("rtmp/chunk: MutliStream.AwaitClose should wait for " +
+			"children to die")
+	}
+
+	close(c2)
+
+	select {
+	case <-time.After(CHAN_CLOSE_TIMEOUT):
+		t.Fatal("rtmp/chunk: MutliStream.AwaitClose should have " +
+			"closed after all children were closed")
+	case <-done:
+	}
 }
 
 func newMockStream() (*MockStream, chan *chunk.Chunk) {
