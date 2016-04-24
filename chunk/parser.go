@@ -1,6 +1,10 @@
 package chunk
 
-import "sync"
+import (
+	"errors"
+	"fmt"
+	"sync"
+)
 
 // Parser is an intermediate chunk-parsing type that handles normalizing and
 // splitting chunks received over the wire. Each chunk that is sent over _any_
@@ -38,7 +42,7 @@ type Parser struct {
 	wg sync.WaitGroup
 	// streams maps chunk stream IDs (contained in the basic header of all
 	// chunks) to their appropriate chunk Stream
-	streams map[uint32]*Stream
+	streams map[uint32]*stream
 
 	// errs holds a channel of all errors encountered during the read/write
 	// process.
@@ -57,26 +61,58 @@ func NewParser(reader Reader, normalizer Normalizer) *Parser {
 	return &Parser{
 		reader:     reader,
 		normalizer: normalizer,
-		streams:    make(map[uint32]*Stream),
+		streams:    make(map[uint32]*stream),
 		errs:       make(chan error),
 		closer:     make(chan struct{}),
 	}
 }
 
-// Stream returns the unique *chunk.Stream associated with a given chunk stream
-// ID. Multiple calls to this method are guaranteed to return the same value. If
-// a chunk stream does not exist for a given chunk stream ID, then one will be
-// created (and subsequently returned). As a result, this method will never
-// return nil.
-func (p *Parser) Stream(id uint32) *Stream {
+// Stream returns a chunk stream containing all of the IDs given as variadic
+// arguments. This works in either one of two cases:
+//
+//  1) a single chunk stream (1 argument) is asked for, and either the one that
+//  already exists, or a new instance of one is returned.
+//
+//  2) multiple chunk streams are asked for, and a MultiStream is returned
+//  containing all of those chunk streams. If a single stream has already been
+//  asked for in the set of streams to concatenate, an error is returned, and no
+//  new chunk streams are created.
+func (p *Parser) Stream(ids ...uint32) (Stream, error) {
+	if len(ids) == 0 {
+		return nil, errors.New(
+			"rtmp/chunk: cannot return empty chunk stream")
+	}
+
 	p.smu.Lock()
 	defer p.smu.Unlock()
 
-	if _, ok := p.streams[id]; !ok {
-		p.streams[id] = NewStream(id)
-	}
+	if len(ids) == 1 {
+		id := ids[0]
 
-	return p.streams[id]
+		if _, ok := p.streams[id]; !ok {
+			p.streams[id] = NewStream(id)
+		}
+
+		return p.streams[id], nil
+	} else {
+		for _, id := range ids {
+			if _, exists := p.streams[id]; exists {
+				return nil, fmt.Errorf(
+					"rtmp/chunk: stream %v already exists", id)
+			}
+		}
+
+		multi := NewMultiStream()
+
+		for _, id := range ids {
+			stream := NewStream(id)
+
+			p.streams[id] = stream
+			multi.Append(stream)
+		}
+
+		return multi, nil
+	}
 }
 
 // Errs returns a channel of errors which contains all reading errors
@@ -105,8 +141,13 @@ func (p *Parser) Recv() {
 		case in := <-p.reader.Chunks():
 			p.normalizer.Normalize(in)
 
-			stream := p.Stream(in.StreamId())
-			stream.in <- in
+			s, err := p.Stream(in.StreamId())
+			if err != nil {
+				p.errs <- err
+				continue
+			}
+
+			s.(*stream).in <- in
 		case err := <-p.reader.Errs():
 			p.errs <- err
 		case <-p.closer:

@@ -27,9 +27,9 @@ type Stream struct {
 // NewStream creates and returns a pointer to a new instance of the Stream type.
 // The instance is initialized with the given chunk stream, and all of the
 // internal channels are `make()`-d.
-func NewStream() *Stream {
+func NewStream(chunks chan *chunk.Chunk) *Stream {
 	return &Stream{
-		chunks: make(chan *chunk.Chunk),
+		chunks: chunks,
 		parser: DefaultParser,
 
 		in:     make(chan Data),

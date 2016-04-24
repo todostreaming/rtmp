@@ -32,12 +32,14 @@ func New(conn io.ReadWriter) *Client {
 		chunk.NewNormalizer(),
 	)
 
+	controlChunks, _ := chunks.Stream(2)
+
 	return &Client{
 		chunks:      chunks,
 		chunkWriter: chunkWriter,
 
 		controlStream: control.NewStream(
-			chunks.Stream(2),
+			controlChunks,
 			chunkWriter,
 			control.NewParser(),
 			control.NewChunker(),
