@@ -1,7 +1,6 @@
 package chunk_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/WatchBeam/rtmp/chunk"
@@ -21,18 +20,14 @@ func TestMultiStreamAppendsMultipleChunkStreams(t *testing.T) {
 	ms := chunk.NewMultiStream()
 	ms.Append(s1, s2)
 
-	o1 := new(chunk.Chunk)
-	o2 := new(chunk.Chunk)
+	o1 := &chunk.Chunk{Data: []byte{1}}
+	o2 := &chunk.Chunk{Data: []byte{2}}
 
 	go func() {
 		c2 <- o2
 		c1 <- o1
 	}()
 
-	assert.True(t, pointerEquality(o2, <-ms.In()), "did not expect chunk #2")
-	assert.True(t, pointerEquality(o1, <-ms.In()), "did not expect chunk #1")
-}
-
-func pointerEquality(v1, v2 interface{}) bool {
-	return reflect.ValueOf(v1).Pointer() == reflect.ValueOf(v2).Pointer()
+	assert.Equal(t, o2, <-ms.In())
+	assert.Equal(t, o1, <-ms.In())
 }
