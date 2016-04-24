@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/WatchBeam/rtmp/chunk"
+	"github.com/WatchBeam/rtmp/cmd"
 	"github.com/WatchBeam/rtmp/control"
 	"github.com/WatchBeam/rtmp/handshake"
 )
@@ -17,6 +18,7 @@ type Client struct {
 	chunkWriter chunk.Writer
 
 	controlStream *control.Stream
+	cmdManager    *cmd.Manager
 
 	// Conn represents the readable and writeable connection that links to
 	// the client. This may be a net.Conn, or even just a bytes.Buffer.
@@ -33,6 +35,7 @@ func New(conn io.ReadWriter) *Client {
 	)
 
 	controlChunks, _ := chunks.Stream(2)
+	netChunks, _ := chunks.Stream(3, 4, 5)
 
 	return &Client{
 		chunks:      chunks,
@@ -44,6 +47,8 @@ func New(conn io.ReadWriter) *Client {
 			control.NewParser(),
 			control.NewChunker(),
 		),
+
+		cmdManager: cmd.New(netChunks, chunkWriter),
 
 		Conn: conn,
 	}
@@ -63,3 +68,7 @@ func (c *Client) Handshake() error {
 // Controls returns the stream of control sequences that are being received
 // from the connected client.
 func (c *Client) Controls() *control.Stream { return c.controlStream }
+
+// Net returns the *cmd.Manager responsible for handling the NetConnection,
+// NetStrema, and DataStream exchanged with this client.
+func (c *Client) Net() *cmd.Manager { return c.cmdManager }
