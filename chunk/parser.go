@@ -94,25 +94,25 @@ func (p *Parser) Stream(ids ...uint32) (Stream, error) {
 		}
 
 		return p.streams[id], nil
-	} else {
-		for _, id := range ids {
-			if _, exists := p.streams[id]; exists {
-				return nil, fmt.Errorf(
-					"rtmp/chunk: stream %v already exists", id)
-			}
-		}
-
-		multi := NewMultiStream()
-
-		for _, id := range ids {
-			stream := NewStream(id)
-
-			p.streams[id] = stream
-			multi.Append(stream)
-		}
-
-		return multi, nil
 	}
+
+	for _, id := range ids {
+		if _, exists := p.streams[id]; exists {
+			return nil, fmt.Errorf(
+				"rtmp/chunk: stream %v already exists", id)
+		}
+	}
+
+	multi := NewMultiStream()
+
+	for _, id := range ids {
+		stream := NewStream(id)
+
+		p.streams[id] = stream
+		multi.Append(stream)
+	}
+
+	return multi, nil
 }
 
 // Errs returns a channel of errors which contains all reading errors
