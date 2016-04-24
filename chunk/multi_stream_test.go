@@ -1,38 +1,74 @@
 package chunk_test
 
 import (
-	"reflect"
 	"testing"
+	"time"
 
 	"github.com/WatchBeam/rtmp/chunk"
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	CHAN_CLOSE_TIMEOUT = 100 * time.Millisecond
+)
+
 func TestMultiStreamAppendsMultipleChunkStreams(t *testing.T) {
-	c1 := make(chan *chunk.Chunk)
-	c2 := make(chan *chunk.Chunk)
-
-	s1 := new(MockStream)
-	s1.On("In").Return(c1).Once()
-
-	s2 := new(MockStream)
-	s2.On("In").Return(c2).Once()
+	s1, c1 := newMockStream()
+	s2, c2 := newMockStream()
 
 	ms := chunk.NewMultiStream()
 	ms.Append(s1, s2)
 
-	o1 := new(chunk.Chunk)
-	o2 := new(chunk.Chunk)
+	o1 := &chunk.Chunk{Data: []byte{1}}
+	o2 := &chunk.Chunk{Data: []byte{2}}
 
 	go func() {
 		c2 <- o2
 		c1 <- o1
 	}()
 
-	assert.True(t, pointerEquality(o2, <-ms.In()), "did not expect chunk #2")
-	assert.True(t, pointerEquality(o1, <-ms.In()), "did not expect chunk #1")
+	assert.Equal(t, o2, <-ms.In())
+	assert.Equal(t, o1, <-ms.In())
 }
 
-func pointerEquality(v1, v2 interface{}) bool {
-	return reflect.ValueOf(v1).Pointer() == reflect.ValueOf(v2).Pointer()
+func TestAwaitCloseWaitsForAllChildrenToClose(t *testing.T) {
+	done := make(chan bool)
+
+	s1, c1 := newMockStream()
+	s2, c2 := newMockStream()
+
+	multi := chunk.NewMultiStream()
+	multi.Append(s1, s2)
+
+	go func() {
+		multi.AwaitClose()
+		done <- true
+	}()
+
+	close(c1)
+
+	select {
+	case <-time.After(CHAN_CLOSE_TIMEOUT):
+	case <-done:
+		t.Fatal("rtmp/chunk: MutliStream.AwaitClose should wait for " +
+			"children to die")
+	}
+
+	close(c2)
+
+	select {
+	case <-time.After(CHAN_CLOSE_TIMEOUT):
+		t.Fatal("rtmp/chunk: MutliStream.AwaitClose should have " +
+			"closed after all children were closed")
+	case <-done:
+	}
+}
+
+func newMockStream() (*MockStream, chan *chunk.Chunk) {
+	s := new(MockStream)
+	c := make(chan *chunk.Chunk)
+
+	s.On("In").Return(c).Once()
+
+	return s, c
 }
