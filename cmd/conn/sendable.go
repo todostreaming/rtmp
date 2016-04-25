@@ -9,7 +9,7 @@ type Sendable interface {
 
 type CreateStreamResponse struct {
 	TransactionId float64
-	Nil           amf0.Null
+	CmdObject     amf0.Object
 	StreamID      float64
 }
 
