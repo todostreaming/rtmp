@@ -14,8 +14,7 @@ import (
 // and read from, and may have additional metadata attached to them in the
 // future.
 type Client struct {
-	chunks      *chunk.Parser
-	chunkWriter chunk.Writer
+	chunks *chunk.Parser
 
 	controlStream *control.Stream
 	cmdManager    *cmd.Manager
@@ -28,7 +27,7 @@ type Client struct {
 // New instantiates and returns a pointer to a new instance of type Client. The
 // client is initialized with the given connection.
 func New(conn io.ReadWriter) *Client {
-	chunkWriter := chunk.NewWriter(conn, chunk.DefaultReadSize)
+	chunkWriter := chunk.NewWriter(conn, 4096)
 	chunks := chunk.NewParser(
 		chunk.NewReader(conn, chunk.DefaultReadSize),
 		chunk.NewNormalizer(),
@@ -38,8 +37,7 @@ func New(conn io.ReadWriter) *Client {
 	netChunks, _ := chunks.Stream(3, 4, 5)
 
 	return &Client{
-		chunks:      chunks,
-		chunkWriter: chunkWriter,
+		chunks: chunks,
 
 		controlStream: control.NewStream(
 			controlChunks,
@@ -58,11 +56,20 @@ func New(conn io.ReadWriter) *Client {
 // an error is encountered during any point of the handshake process, it will be
 // returned immediately.
 //
+// If no error is encounterd while handshaking, the chunk reading process will
+// begin.
+//
 // See github.com/WatchBeam/RTMP/handshake for details.
 func (c *Client) Handshake() error {
-	return handshake.With(&handshake.Param{
+	if err := handshake.With(&handshake.Param{
 		Conn: c.Conn,
-	}).Handshake()
+	}); err != nil {
+		return err
+	}
+
+	go c.chunks.Recv()
+
+	return nil
 }
 
 // Controls returns the stream of control sequences that are being received
