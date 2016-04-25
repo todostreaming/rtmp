@@ -63,7 +63,7 @@ func New(conn io.ReadWriter) *Client {
 func (c *Client) Handshake() error {
 	if err := handshake.With(&handshake.Param{
 		Conn: c.Conn,
-	}); err != nil {
+	}).Handshake(); err != nil {
 		return err
 	}
 
