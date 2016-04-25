@@ -23,6 +23,7 @@ func TestChunkersMarshalChunks(t *testing.T) {
 	}
 
 	marshalled, _ := encoding.Marshal(crsp)
+	marshalled = append(conn.ResponsePrefix, marshalled...)
 
 	c, err := conn.NewChunker(13).Chunk(crsp)
 

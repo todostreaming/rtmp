@@ -17,10 +17,21 @@ var (
 	// It is recommended that this be used as the primary parcer in any type
 	// that requires it.
 	DefaultParser Parser = NewParser(map[string]ReceviableFactory{
-		"connect":       func() Receivable { return new(ConnectCommand) },
-		"createStream":  func() Receivable { return new(CreateStreamCommand) },
+		"connect": func() Receivable {
+			return &ConnectCommand{
+				Metadata: amf0.NewObject(),
+			}
+		},
+
+		"createStream": func() Receivable {
+			return &CreateStreamCommand{
+				Metadata: amf0.NewObject(),
+			}
+		},
+
 		"releaseStream": func() Receivable { return new(ReleaseCommand) },
-		"FCPublish":     func() Receivable { return new(FCPublishCommand) },
+
+		"FCPublish": func() Receivable { return new(FCPublishCommand) },
 	})
 )
 
