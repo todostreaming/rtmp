@@ -1,13 +1,8 @@
 package conn
 
 import (
-	"github.com/WatchBeam/amf0"
 	"github.com/WatchBeam/amf0/encoding"
 	"github.com/WatchBeam/rtmp/chunk"
-)
-
-var (
-	ResponsePrefix, _ = amf0.EncodeToBytes(amf0.NewString("_result"))
 )
 
 // DefaultChunker provides a default implementation of the Chunker interface.
@@ -31,12 +26,12 @@ func NewChunker(sid uint32) Chunker {
 // the given ConnSendable, using the amf0/encoding package, and writes it into a
 // chunk to be sent over the correct chunk stream ID.
 func (c *DefaultChunker) Chunk(s Sendable) (*chunk.Chunk, error) {
+	s.OnPreSend() // HACK: see method comment in interface.
+
 	data, err := encoding.Marshal(s)
 	if err != nil {
 		return nil, err
 	}
-
-	data = append(ResponsePrefix, data...)
 
 	return &chunk.Chunk{
 		Header: &chunk.Header{

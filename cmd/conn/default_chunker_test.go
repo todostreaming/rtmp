@@ -22,8 +22,8 @@ func TestChunkersMarshalChunks(t *testing.T) {
 		Information:   amf0.Object{amf0.NewPaired()},
 	}
 
+	crsp.OnPreSend()
 	marshalled, _ := encoding.Marshal(crsp)
-	marshalled = append(conn.ResponsePrefix, marshalled...)
 
 	c, err := conn.NewChunker(13).Chunk(crsp)
 
