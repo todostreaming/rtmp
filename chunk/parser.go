@@ -33,8 +33,6 @@ import (
 type Parser struct {
 	// reader is the Reader that chunks are read from.
 	reader Reader
-	// normalizer is the Normalizer type that produces complete chunks.
-	normalizer Normalizer
 
 	// smu guards streams
 	smu sync.Mutex
@@ -57,13 +55,12 @@ type Parser struct {
 //
 // All internal channels, maps, and slices are instantiated at this time as
 // well, and the receiving process is spawned in its own goroutine.
-func NewParser(reader Reader, normalizer Normalizer) *Parser {
+func NewParser(reader Reader) *Parser {
 	return &Parser{
-		reader:     reader,
-		normalizer: normalizer,
-		streams:    make(map[uint32]*stream),
-		errs:       make(chan error),
-		closer:     make(chan struct{}),
+		reader:  reader,
+		streams: make(map[uint32]*stream),
+		errs:    make(chan error),
+		closer:  make(chan struct{}),
 	}
 }
 
@@ -107,8 +104,8 @@ func (p *Parser) Stream(ids ...uint32) (Stream, error) {
 
 	for _, id := range ids {
 		stream := NewStream(id)
-
 		p.streams[id] = stream
+
 		multi.Append(stream)
 	}
 
@@ -139,8 +136,6 @@ func (p *Parser) Recv() {
 	for {
 		select {
 		case in := <-p.reader.Chunks():
-			p.normalizer.Normalize(in)
-
 			s, err := p.Stream(in.StreamId())
 			if err != nil {
 				p.errs <- err

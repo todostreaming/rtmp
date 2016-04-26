@@ -16,11 +16,10 @@ import (
 
 	"github.com/WatchBeam/rtmp/chunk"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestNewStreamReturnsNewStreams(t *testing.T) {
-	p := chunk.NewParser(&MockReader{}, nil)
+	p := chunk.NewParser(&MockReader{})
 
 	assert.IsType(t, &chunk.Parser{}, p)
 }
@@ -35,7 +34,7 @@ func TestStreamPropogatesErrors(t *testing.T) {
 	reader.On("Errs").Return(errs)
 	reader.On("Close").Return()
 
-	p := chunk.NewParser(reader, chunk.NewNormalizer())
+	p := chunk.NewParser(reader)
 	errs <- errors.New("testing: some error")
 
 	go p.Recv()
@@ -58,7 +57,7 @@ func TestStreamClosesAfterSignalSent(t *testing.T) {
 	reader.On("Errs").Return(errs)
 	reader.On("Close").Return().Once()
 
-	p := chunk.NewParser(reader, chunk.NewNormalizer())
+	p := chunk.NewParser(reader)
 
 	go p.Recv()
 	p.Close()
@@ -66,38 +65,8 @@ func TestStreamClosesAfterSignalSent(t *testing.T) {
 	// reader.AssertExpectations(t)
 }
 
-func TestStreamNormalizesChunksAndSendsThem(t *testing.T) {
-	chunks := make(chan *chunk.Chunk, 2)
-	chunks <- &chunk.Chunk{
-		Header: &chunk.Header{
-			BasicHeader: chunk.BasicHeader{0, 2},
-		},
-	}
-
-	reader := &MockReader{}
-	reader.On("Recv").Return()
-	reader.On("Chunks").Return(chunks)
-	reader.On("Errs").Return(make(chan error))
-	reader.On("Close").Return()
-
-	normalizer := &MockNormalizer{}
-	normalizer.On("Normalize", mock.Anything).Return().Once()
-
-	parser := chunk.NewParser(reader, normalizer)
-	go parser.Recv()
-
-	stream, err := parser.Stream(2)
-	assert.Nil(t, err)
-	<-stream.In()
-
-	parser.Close()
-
-	// reader.AssertExpectations(t)
-	// normalizer.AssertExpectations(t)
-}
-
 func TestParserReturnsNewSingleChunkStreams(t *testing.T) {
-	parser := chunk.NewParser(nil, nil)
+	parser := chunk.NewParser(nil)
 
 	stream, err := parser.Stream(1)
 
@@ -106,7 +75,7 @@ func TestParserReturnsNewSingleChunkStreams(t *testing.T) {
 }
 
 func TestParserReturnsConsistentChunkStreams(t *testing.T) {
-	parser := chunk.NewParser(nil, nil)
+	parser := chunk.NewParser(nil)
 
 	s1, _ := parser.Stream(1)
 	s2, _ := parser.Stream(1)
@@ -117,7 +86,7 @@ func TestParserReturnsConsistentChunkStreams(t *testing.T) {
 }
 
 func TestParserReturnsMultiStreamsWhenNoStreamsAlreadyExist(t *testing.T) {
-	parser := chunk.NewParser(nil, nil)
+	parser := chunk.NewParser(nil)
 
 	stream, err := parser.Stream(1, 2, 3)
 
@@ -126,7 +95,7 @@ func TestParserReturnsMultiStreamsWhenNoStreamsAlreadyExist(t *testing.T) {
 }
 
 func TestParserDoesNotReturnMultiStreamsWhenStreamsAlreadyExist(t *testing.T) {
-	parser := chunk.NewParser(nil, nil)
+	parser := chunk.NewParser(nil)
 
 	parser.Stream(1) // take out stream ID 1
 

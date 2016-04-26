@@ -36,14 +36,17 @@ type Reader interface {
 }
 
 // NewReader allocates and returns a pointer to a new instance of the Reader
-// interface, with the concrete DefaultReader type as its implementation.
-func NewReader(src io.Reader, readSize int) Reader {
+// interface, with the concrete DefaultReader type as its implementation. It
+// uses the provided `src`, `readSize`, and `normalizer` as initialization
+// variables.
+func NewReader(src io.Reader, readSize int, normalizer Normalizer) Reader {
 	return &DefaultReader{
-		src:      src,
-		readSize: readSize,
-		builders: make(map[uint32]*Builder),
-		chunks:   make(chan *Chunk),
-		errs:     make(chan error),
-		closer:   make(chan struct{}),
+		src:        src,
+		readSize:   readSize,
+		normalizer: normalizer,
+		builders:   make(map[uint32]*Builder),
+		chunks:     make(chan *Chunk),
+		errs:       make(chan error),
+		closer:     make(chan struct{}),
 	}
 }

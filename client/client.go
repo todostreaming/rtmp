@@ -28,10 +28,9 @@ type Client struct {
 // client is initialized with the given connection.
 func New(conn io.ReadWriter) *Client {
 	chunkWriter := chunk.NewWriter(conn, 4096)
-	chunks := chunk.NewParser(
-		chunk.NewReader(conn, chunk.DefaultReadSize),
-		chunk.NewNormalizer(),
-	)
+	chunks := chunk.NewParser(chunk.NewReader(
+		conn, chunk.DefaultReadSize, chunk.NewNormalizer(),
+	))
 
 	controlChunks, _ := chunks.Stream(2)
 	netChunks, _ := chunks.Stream(3, 4, 5)

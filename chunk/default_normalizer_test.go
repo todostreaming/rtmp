@@ -1,139 +1,73 @@
-package chunk_test
+package chunk
 
 import (
 	"testing"
 
-	"github.com/WatchBeam/rtmp/chunk"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewNormalizer(t *testing.T) {
-	n := chunk.NewNormalizer()
+	n := NewNormalizer()
 
-	assert.IsType(t, &chunk.DefaultNormalizer{}, n)
-}
-
-func TestInitialChunkIsNil(t *testing.T) {
-	n := chunk.NewNormalizer()
-	c := n.Last()
-
-	assert.Nil(t, c)
-}
-
-func TestSettingLastChunk(t *testing.T) {
-	n := chunk.NewNormalizer()
-	chunk := &chunk.Chunk{}
-
-	n.SetLast(chunk)
-
-	assert.Equal(t, chunk, n.Last())
-}
-
-func TestStoringHeaders(t *testing.T) {
-	n := chunk.NewNormalizer()
-	h := &chunk.Header{
-		BasicHeader: chunk.BasicHeader{
-			StreamId: 0x01,
-		},
-	}
-
-	n.StoreHeader(h)
-
-	assert.Equal(t, h, n.Header(0x01))
-}
-
-func TestNormalizingStoresChunks(t *testing.T) {
-	n := chunk.NewNormalizer()
-	n.Normalize(&chunk.Chunk{
-		Header: &chunk.Header{
-			BasicHeader: chunk.BasicHeader{
-				StreamId: 12,
-			},
-			MessageHeader: chunk.MessageHeader{
-				StreamId: 3,
-				Length:   8,
-			},
-		},
-	})
-
-	last := n.Last()
-	header := n.Header(12)
-
-	assert.Equal(t, uint32(3), last.Header.MessageHeader.StreamId)
-	assert.Equal(t, uint32(8), last.Header.MessageHeader.Length)
-	assert.Equal(t, uint32(3), header.MessageHeader.StreamId)
-	assert.Equal(t, uint32(8), header.MessageHeader.Length)
+	assert.IsType(t, &DefaultNormalizer{}, n)
 }
 
 func TestNormalizingSkippedWhenNotNecessary(t *testing.T) {
-	n := chunk.NewNormalizer()
-	n.SetLast(&chunk.Chunk{
-		Header: &chunk.Header{
-			MessageHeader: chunk.MessageHeader{
-				StreamId: 3,
-				Length:   8,
-			},
+	n := NewNormalizer()
+	n.Normalize(&Header{
+		MessageHeader: MessageHeader{
+			StreamId: 3,
+			Length:   8,
 		},
 	})
 
-	chunk := &chunk.Chunk{
-		Header: &chunk.Header{
-			MessageHeader: chunk.MessageHeader{
-				TypeId: 0,
-			},
-		},
+	h := &Header{
+		BasicHeader: BasicHeader{FormatId: 0},
 	}
 
-	n.Normalize(chunk)
+	h = n.Normalize(h)
 
-	assert.Equal(t, uint32(0), chunk.Header.MessageHeader.StreamId)
-	assert.Equal(t, uint32(0), chunk.Header.MessageHeader.Length)
+	assert.Equal(t, uint32(0), h.MessageHeader.StreamId)
+	assert.Equal(t, uint32(0), h.MessageHeader.Length)
 }
 
 func TestNormalizingFillsInPartialHeadersWhenNecessary(t *testing.T) {
-	n := chunk.NewNormalizer()
-	n.SetLast(&chunk.Chunk{
-		Header: &chunk.Header{
-			MessageHeader: chunk.MessageHeader{
-				StreamId: 3,
-				Length:   8,
-			},
+	n := NewNormalizer()
+	n.Normalize(&Header{
+		MessageHeader: MessageHeader{
+			StreamId: 3,
+			Length:   8,
 		},
 	})
 
-	chunk := &chunk.Chunk{
-		Header: &chunk.Header{
-			MessageHeader: chunk.MessageHeader{
-				TypeId: 2,
-			},
+	h := &Header{
+		BasicHeader: BasicHeader{FormatId: 2},
+		MessageHeader: MessageHeader{
+			StreamId: 4,
 		},
 	}
-	n.Normalize(chunk)
 
-	assert.Equal(t, uint32(3), chunk.Header.MessageHeader.StreamId)
-	assert.Equal(t, uint32(8), chunk.Header.MessageHeader.Length)
+	h = n.Normalize(h)
+
+	assert.Equal(t, uint32(8), h.MessageHeader.Length)
 }
 
 func TestNormalizingFillsMissingHeaders(t *testing.T) {
-	n := chunk.NewNormalizer()
-	n.StoreHeader(&chunk.Header{
-		MessageHeader: chunk.MessageHeader{
-			TypeId:    3,
+	n := NewNormalizer()
+	n.Normalize(&Header{
+		BasicHeader: BasicHeader{FormatId: 0},
+		MessageHeader: MessageHeader{
 			Timestamp: 4,
 			Length:    5,
 		},
 	})
 
-	chunk := &chunk.Chunk{
-		Header: &chunk.Header{
-			MessageHeader: chunk.MessageHeader{
-				TypeId: 3,
-			},
-		},
+	h := &Header{
+		BasicHeader: BasicHeader{FormatId: 3},
 	}
-	n.Normalize(chunk)
 
-	assert.Equal(t, byte(3), chunk.Header.MessageHeader.TypeId)
-	assert.Equal(t, uint32(4), chunk.Header.MessageHeader.Timestamp)
-	assert.Equal(t, uint32(5), chunk.Header.MessageHeader.Length)
+	h = n.Normalize(h)
+
+	assert.Equal(t, uint32(4), h.MessageHeader.Timestamp)
+	assert.Equal(t, uint32(5), h.MessageHeader.Length)
 }

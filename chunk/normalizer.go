@@ -13,29 +13,27 @@ type Normalizer interface {
 	// chunk, missing some header-data, and returning a complete chunk, with
 	// the missing information filled in.
 	//
-	// For Type 1 and 2 headers, this means filling in the stream ID and
-	// length from the last chunk that was received on any chunk stream. For
-	// Type 3 headers, this means replacing the "missing" message header,
-	// with the last full message header sent over the matching chunk stream
-	// ID.
+	// For Type 1 and 2 basic headers, this means filling in the stream ID
+	// and length from the last chunk that was received on any chunk stream.
+	// For Type 3 headers, this means replacing the "missing" message
+	// header, with the last full message header sent over the matching
+	// chunk stream ID.
 	//
 	// Calling Normalize also updates the last received chunk to the one
 	// that was just normalized, eliminating the need to call the
 	// "Set<chunk|last>" methods.
-	Normalize(chunk *Chunk)
-
-	// Last	returns the last full chunk that was received over any chunk
-	// stream, in a synchronous fashion.
-	Last() *Chunk
-	// SetLast sets the last received chunk received over any chunk stream,
-	// in a synchronous fashion.
-	SetLast(*Chunk)
-
-	// Header returns the last "full" header received over the given chunk
-	// stream, in a synchronous fashion.
-	Header(streamId uint32) *Header
-
-	// StoreHeader updates the last full header received over the given
-	// header's chunk stream in a synchronous fashion.
-	StoreHeader(*Header)
+	Normalize(*Header) *Header
 }
+
+var (
+	// NoopNormalizer is a singleton implementation of the Normalizer type
+	// that simply serves as a pass-through for all given headers.
+	NoopNormalizer Normalizer = new(noopNormalizer)
+)
+
+// noopNormalizer is the internal implementation of the NoopNormalizer (see
+// above).
+type noopNormalizer struct{}
+
+// Normalize implements Normalizer.Normalize.
+func (n *noopNormalizer) Normalize(h *Header) *Header { return h }
