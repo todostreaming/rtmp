@@ -2,20 +2,35 @@ package chunk_test
 
 import (
 	"bytes"
+	"io"
 	"testing"
 
 	"github.com/WatchBeam/rtmp/chunk"
 	"github.com/stretchr/testify/assert"
 )
 
+func NewReader(r io.Reader) chunk.Reader {
+	if r == nil {
+		r = new(bytes.Buffer)
+	}
+
+	return chunk.NewReader(
+		r, chunk.DefaultReadSize, chunk.NoopNormalizer,
+	)
+}
+
 func TestReaderConstruction(t *testing.T) {
-	r := chunk.NewReader(new(bytes.Buffer), chunk.DefaultReadSize)
+	r := chunk.NewReader(
+		new(bytes.Buffer),
+		chunk.DefaultReadSize,
+		chunk.NoopNormalizer,
+	)
 
 	assert.IsType(t, &chunk.DefaultReader{}, r)
 }
 
 func TestGetReadSize(t *testing.T) {
-	r := chunk.NewReader(new(bytes.Buffer), chunk.DefaultReadSize)
+	r := NewReader(nil)
 
 	size := r.ReadSize()
 
@@ -23,7 +38,7 @@ func TestGetReadSize(t *testing.T) {
 }
 
 func TestSetReadSize(t *testing.T) {
-	r := chunk.NewReader(new(bytes.Buffer), chunk.DefaultReadSize)
+	r := NewReader(nil)
 
 	r.SetReadSize(6)
 
@@ -43,7 +58,7 @@ func TestReadSingleChunkSinglePass(t *testing.T) {
 
 	chunk.NewWriter(b, chunk.DefaultReadSize).Write(c)
 
-	r := chunk.NewReader(b, chunk.DefaultReadSize)
+	r := NewReader(b)
 	go r.Recv()
 
 	read := <-r.Chunks()
@@ -65,7 +80,7 @@ func TestReadSingleChunkMultiPass(t *testing.T) {
 
 	chunk.NewWriter(b, 4).Write(c)
 
-	r := chunk.NewReader(b, 4)
+	r := chunk.NewReader(b, 4, chunk.NoopNormalizer)
 	go r.Recv()
 
 	read := <-r.Chunks()
@@ -96,7 +111,7 @@ func TestReadMultiChunkSinglePass(t *testing.T) {
 	chunk.NewWriter(b, chunk.DefaultReadSize).Write(c1)
 	chunk.NewWriter(b, chunk.DefaultReadSize).Write(c2)
 
-	r := chunk.NewReader(b, chunk.DefaultReadSize)
+	r := NewReader(b)
 	go r.Recv()
 
 	r1 := <-r.Chunks()
@@ -133,7 +148,7 @@ func TestReadMultiChunkMultiPass(t *testing.T) {
 		Data: []byte{0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f},
 	}
 
-	r := chunk.NewReader(buf, 4)
+	r := chunk.NewReader(buf, 4, chunk.NoopNormalizer)
 	go r.Recv()
 
 	r1 := <-r.Chunks()

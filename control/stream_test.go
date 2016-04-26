@@ -29,9 +29,9 @@ func newStreamWithChunk(streamId uint32, chunks ...*chunk.Chunk) chunk.Stream {
 		chunk.NewWriter(buf, chunk.DefaultReadSize).Write(c)
 	}
 
-	parser := chunk.NewParser(
-		chunk.NewReader(buf, chunk.DefaultReadSize),
-		chunk.NewNormalizer())
+	parser := chunk.NewParser(chunk.NewReader(
+		buf, chunk.DefaultReadSize, chunk.NoopNormalizer,
+	))
 	go parser.Recv()
 
 	st, _ := parser.Stream(streamId)

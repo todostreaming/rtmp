@@ -25,6 +25,9 @@ type DefaultReader struct {
 	// chunk has been fully read, this entry is removed.
 	builders map[uint32]*Builder
 
+	// normalizer is the Normalizer used to normalize incoming headers.
+	normalizer Normalizer
+
 	// rmu guards readSize
 	rmu sync.Mutex
 	// readSize refers to the maximum amount of bytes that can be read at
@@ -79,6 +82,7 @@ func (r *DefaultReader) Recv() {
 				r.errs <- err
 				continue
 			}
+			header = r.normalizer.Normalize(header)
 
 			builder := r.builder(header)
 			n := spec.Min(builder.BytesLeft(), r.ReadSize())

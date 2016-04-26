@@ -8,7 +8,7 @@ type DefaultNormalizer struct {
 	// lmu guards last
 	lmu sync.Mutex
 	// last holds a pointer to the last full chunk that was received
-	last *Chunk
+	last *Header
 
 	// hmu guards headers
 	hmu sync.Mutex
@@ -26,23 +26,25 @@ func NewNormalizer() Normalizer {
 }
 
 // Normalize implements the `Normalize` func from the Normalizer interface.
-func (n *DefaultNormalizer) Normalize(c *Chunk) {
+func (n *DefaultNormalizer) Normalize(h *Header) *Header {
 	last := n.Last()
-	lastSameStream := n.Header(c.StreamId())
+	lastSameStream := n.Header(h.BasicHeader.StreamId)
 
 	if last != nil {
-		n.fillPartialHeader(last.Header, c.Header)
+		n.fillPartialHeader(last, h)
 	}
 	if lastSameStream != nil {
-		n.fillEmptyHeader(lastSameStream, c.Header)
+		n.fillEmptyHeader(lastSameStream, h)
 	}
 
-	n.SetLast(c)
-	n.StoreHeader(c.Header)
+	n.SetLast(h)
+	n.StoreHeader(h)
+
+	return h
 }
 
 // Last implements the `Last` func from the Normalizer interface.
-func (n *DefaultNormalizer) Last() *Chunk {
+func (n *DefaultNormalizer) Last() *Header {
 	n.lmu.Lock()
 	defer n.lmu.Unlock()
 
@@ -50,11 +52,11 @@ func (n *DefaultNormalizer) Last() *Chunk {
 }
 
 // SetLast implements the `SetLast` func from the Normalizer interface.
-func (n *DefaultNormalizer) SetLast(c *Chunk) {
+func (n *DefaultNormalizer) SetLast(h *Header) {
 	n.lmu.Lock()
 	defer n.lmu.Unlock()
 
-	n.last = c
+	n.last = h
 }
 
 // Header implements the `Header` func from the Normalizer interface.
@@ -77,14 +79,14 @@ func (n *DefaultNormalizer) StoreHeader(h *Header) {
 // fillPartialHeader fills in partially empty chunk message headers, according
 // to the RTMP spec.
 func (n *DefaultNormalizer) fillPartialHeader(last *Header, h *Header) {
-	typeId := h.MessageHeader.TypeId
-	if typeId != 1 && typeId != 2 {
+	fmtId := h.BasicHeader.FormatId
+	if fmtId != 1 && fmtId != 2 {
 		return
 	}
 
 	h.MessageHeader.StreamId = last.MessageHeader.StreamId
 
-	if typeId == 2 {
+	if fmtId == 2 {
 		h.MessageHeader.Length = last.MessageHeader.Length
 	}
 }
@@ -92,7 +94,7 @@ func (n *DefaultNormalizer) fillPartialHeader(last *Header, h *Header) {
 // fillEmptyHeaderp fills in completely empty chunk message headers, according
 // to the RTMP spec.
 func (n *DefaultNormalizer) fillEmptyHeader(last *Header, h *Header) {
-	if h.MessageHeader.TypeId != 3 {
+	if h.BasicHeader.FormatId != 3 {
 		return
 	}
 
