@@ -19,7 +19,7 @@ type Marshallable interface {
 type CreateStreamResponse struct {
 	ResponseType  string
 	TransactionId float64
-	CmdObject     amf0.Object
+	_             *amf0.Null
 	StreamID      float64
 }
 
