@@ -22,7 +22,7 @@ func TestItCallsHandshakeReadWrite(t *testing.T) {
 
 	initial := new(MockSequence)
 	initial.On("Read", conn).Return(nil).Once()
-	initial.On("Write", conn).Return(nil).Once()
+	initial.On("WriteTo", conn).Return(nil).Once()
 	initial.On("Next").Return(nil).Once()
 
 	h := handshake.With(&handshake.Param{
@@ -54,7 +54,7 @@ func TestItAbortsOnWriteErrors(t *testing.T) {
 
 	initial := new(MockSequence)
 	initial.On("Read", conn).Return(nil).Once()
-	initial.On("Write", conn).Return(errors.New("foo")).Once()
+	initial.On("WriteTo", conn).Return(errors.New("foo")).Once()
 
 	h := handshake.With(&handshake.Param{
 		Conn:    conn,
@@ -70,12 +70,12 @@ func TestItCyclesToNextSequence(t *testing.T) {
 
 	next := new(MockSequence)
 	next.On("Read", conn).Return(nil).Once()
-	next.On("Write", conn).Return(nil).Once()
+	next.On("WriteTo", conn).Return(nil).Once()
 	next.On("Next").Return(nil).Once()
 
 	initial := new(MockSequence)
 	initial.On("Read", conn).Return(nil).Once()
-	initial.On("Write", conn).Return(nil).Once()
+	initial.On("WriteTo", conn).Return(nil).Once()
 	initial.On("Next").Return(next).Once()
 
 	h := handshake.With(&handshake.Param{

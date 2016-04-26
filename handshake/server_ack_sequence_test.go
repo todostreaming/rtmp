@@ -59,7 +59,7 @@ func TestServerAckSequenceDoesNotWrite(t *testing.T) {
 	s := handshake.NewServerAckSequence(nil)
 	buf := bytes.NewBuffer([]byte{})
 
-	err := s.Write(buf)
+	err := s.WriteTo(buf)
 
 	assert.Nil(t, err)
 	assert.Empty(t, buf.Bytes())

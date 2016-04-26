@@ -16,14 +16,14 @@ type Sequence interface {
 	// returned here, as well.
 	Read(r io.Reader) error
 
-	// Write preforms the write-operation assosciatd with this Sequence. It
+	// WriteTo preforms the write-operation assosciatd with this Sequence. It
 	// writes any data to the connecting client (represented by the `w
 	// io.Writer` parameter) necessary to complete this current handshake
 	// Sequence.
 	//
 	// If an error was encountered during this operation, then it should be
 	// returned here, as well.
-	Write(w io.Writer) error
+	WriteTo(w io.Writer) error
 
 	// Next returns the Sequence that should follow this one. If no sequence
 	// follows this one, then a value of nil should be returned, instead.

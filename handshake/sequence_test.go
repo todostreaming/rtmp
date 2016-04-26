@@ -17,7 +17,7 @@ func (s *MockSequence) Read(r io.Reader) error {
 	return s.Called(r).Error(0)
 }
 
-func (s *MockSequence) Write(w io.Writer) error {
+func (s *MockSequence) WriteTo(w io.Writer) error {
 	return s.Called(w).Error(0)
 }
 

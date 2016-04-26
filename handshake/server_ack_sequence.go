@@ -47,9 +47,9 @@ func (s *ServerAckSequence) Read(r io.Reader) error {
 	return nil
 }
 
-// Write implements the Sequence.Write function. Since there is nothing to
+// WriteTo implements the Sequence.WriteTo function. Since there is nothing to
 // write, a value of nil is always returned here.
-func (s *ServerAckSequence) Write(w io.Writer) error { return nil }
+func (s *ServerAckSequence) WriteTo(w io.Writer) error { return nil }
 
 // Next implements the Sequence.Next function. Since there is no next function,
 // this function always returns nil.

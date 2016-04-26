@@ -41,13 +41,13 @@ func (c *ClientAckSequence) Read(r io.Reader) error {
 	return nil
 }
 
-// Write implements the Sequence.Write function. It writes the S1 packet first
-// (returning any errors if there is one), and then writes the S2 packet with
-// the same data as was sent in the C1 packet (returning any error that was
+// WriteTo implements the Sequence.WriteTo function. It writes the S1 packet
+// first (returning any errors if there is one), and then writes the S2 packet
+// with the same data as was sent in the C1 packet (returning any error that was
 // encountered).
 //
 // A successful call to Write constitutes a value of `nil` being returned.
-func (c *ClientAckSequence) Write(w io.Writer) error {
+func (c *ClientAckSequence) WriteTo(w io.Writer) error {
 	if err := c.S1.Write(w); err != nil {
 		return err
 	}

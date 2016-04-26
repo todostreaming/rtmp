@@ -32,6 +32,6 @@ func TestItWritesVersion(t *testing.T) {
 	buf := new(bytes.Buffer)
 	v := handshake.NewVersionSequence()
 
-	assert.Nil(t, v.Write(buf))
+	assert.Nil(t, v.WriteTo(buf))
 	assert.Equal(t, []byte{0x3}, buf.Bytes()[:1])
 }

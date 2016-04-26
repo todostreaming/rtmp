@@ -45,10 +45,10 @@ func (v *VerisonSequence) Read(r io.Reader) error {
 	return nil
 }
 
-// Write writes out the version that this RTMP server supports. If any write
+// WriteTo writes out the version that this RTMP server supports. If any write
 // error was encountered, it will be returned immediately. Otherwise, a value of
 // nil is returned.
-func (v *VerisonSequence) Write(w io.Writer) error {
+func (v *VerisonSequence) WriteTo(w io.Writer) error {
 	if _, err := w.Write([]byte{v.Supported}); err != nil {
 		return err
 	}

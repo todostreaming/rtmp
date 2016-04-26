@@ -51,7 +51,7 @@ func TestItWritesS1AndMatchingS2(t *testing.T) {
 	start := 4 + 4 + 1528 + 4 + 4
 	end := start + 1528
 
-	err := c.Write(buf)
+	err := c.WriteTo(buf)
 
 	assert.Nil(t, err)
 	assert.Len(t, buf.Bytes(), 2*(4+4+1528))
