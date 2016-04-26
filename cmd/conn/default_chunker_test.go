@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/WatchBeam/amf0"
-	"github.com/WatchBeam/amf0/encoding"
 	"github.com/WatchBeam/rtmp/cmd/conn"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,8 +21,7 @@ func TestChunkersMarshalChunks(t *testing.T) {
 		Information:   amf0.Object{amf0.NewPaired()},
 	}
 
-	marshalled, _ := encoding.Marshal(crsp)
-	marshalled = append(conn.ResponsePrefix, marshalled...)
+	marshalled, _ := crsp.Marshal()
 
 	c, err := conn.NewChunker(13).Chunk(crsp)
 

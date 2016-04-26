@@ -9,8 +9,8 @@ type MockChunker struct {
 	mock.Mock
 }
 
-func (c *MockChunker) Chunk(s Sendable) (*chunk.Chunk, error) {
-	args := c.Called(s)
+func (c *MockChunker) Chunk(m Marshallable) (*chunk.Chunk, error) {
+	args := c.Called(m)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
