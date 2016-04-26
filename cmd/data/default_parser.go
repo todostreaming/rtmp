@@ -2,8 +2,8 @@ package data
 
 import (
 	"fmt"
-	"reflect"
 
+	"github.com/WatchBeam/amf0"
 	"github.com/WatchBeam/rtmp/chunk"
 )
 
@@ -11,25 +11,31 @@ var (
 	// DefaultParser is a singleton instance of the Parser type (using the
 	// SimpleParser type as implementation) that contains references to both
 	// Data implementations: Audio and Video.
-	DefaultParser = NewParser([]Data{
-		new(Audio), new(Video),
-	})
+	DefaultParser = NewParser(
+		func() Data { return &Audio{} },
+		func() Data { return &Video{} },
+		func() Data { return &DataFrame{Arguments: amf0.NewArray()} },
+	)
 )
+
+// DataFactory is a factory type that produces new instances of a given Data
+// type.
+type DataFactory func() Data
 
 // SimpleParser provides a default implementation of the Parser eype.
 type SimpleParser struct {
-	typs map[byte]reflect.Type
+	typs map[byte]DataFactory
 }
 
 // NewParser creates and returns an instance of the *SimpleParser type. It is
 // initialized with the given Data implementations.
-func NewParser(typs []Data) *SimpleParser {
+func NewParser(factories ...DataFactory) *SimpleParser {
 	p := &SimpleParser{
-		typs: make(map[byte]reflect.Type),
+		typs: make(map[byte]DataFactory),
 	}
 
-	for _, t := range typs {
-		p.typs[t.Id()] = reflect.TypeOf(t).Elem()
+	for _, f := range factories {
+		p.typs[f().Id()] = f
 	}
 
 	return p
@@ -56,10 +62,10 @@ func (p *SimpleParser) Parse(c *chunk.Chunk) (Data, error) {
 // If no matching Data implementation was found, then a value of a nil is
 // returned instead.
 func (p *SimpleParser) New(id byte) Data {
-	typ := p.typs[id]
-	if typ == nil {
+	f := p.typs[id]
+	if f == nil {
 		return nil
 	}
 
-	return reflect.New(typ).Interface().(Data)
+	return f()
 }
