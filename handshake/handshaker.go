@@ -60,7 +60,7 @@ func (h *Handshaker) Handshake() error {
 			return err
 		}
 
-		if err := h.current.Write(h.rw); err != nil {
+		if err := h.current.WriteTo(h.rw); err != nil {
 			return err
 		}
 	}

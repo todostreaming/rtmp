@@ -1,7 +1,6 @@
 package handshake
 
 import (
-	"crypto/rand"
 	"fmt"
 	"io"
 )
@@ -15,9 +14,6 @@ const (
 // VerisonSequence is the sequence responsible for exchanging and acknowledging
 // the RTMP versions across the network.
 type VerisonSequence struct {
-	// S1 is the S1 packet that will be sent. It is generated in the
-	// NewVersionSequence() pseudo-constructor.
-	S1 *AckPacket
 	// Supported is the supported version byte that this server can handle.
 	Supported byte
 }
@@ -25,17 +21,11 @@ type VerisonSequence struct {
 var _ Sequence = new(VerisonSequence)
 
 // NewVersionSequence instantiates and returns a pointer to a new instance of
-// the VerisonSequence type. A call to this method also initializes a random
-// payload into the S1 packet by reading from `rand.Reader`.
+// the VerisonSequence type.
 func NewVersionSequence() *VerisonSequence {
-	v := &VerisonSequence{
-		S1:        new(AckPacket),
+	return &VerisonSequence{
 		Supported: SupportedRTMPVersion,
 	}
-
-	rand.Read(v.S1.Payload[:])
-
-	return v
 }
 
 // Read reads the version byte off of the io.Reader, returning an error if
@@ -55,23 +45,19 @@ func (v *VerisonSequence) Read(r io.Reader) error {
 	return nil
 }
 
-// Write writes out the supported version as well as the S1 payload, returning
-// any errors it encountered, if there were any.
-func (v *VerisonSequence) Write(w io.Writer) error {
+// WriteTo writes out the version that this RTMP server supports. If any write
+// error was encountered, it will be returned immediately. Otherwise, a value of
+// nil is returned.
+func (v *VerisonSequence) WriteTo(w io.Writer) error {
 	if _, err := w.Write([]byte{v.Supported}); err != nil {
-		return err
-	}
-
-	if err := v.S1.Write(w); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// Next returns the AckSequence, which is the next logical sequence according to
-// the RTMP specification. It initializes next with the same random challenge
-// payload that was sent in S1, for comparison to C2.
+// Next returns the ClientAckSequence, which is the next step in the RTMP
+// handshake, according to the specification.
 func (v *VerisonSequence) Next() Sequence {
-	return NewAckSequence(v.S1.Payload)
+	return NewClientAckSequence()
 }
