@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewParserConstructsNewParsers(t *testing.T) {
-	p := data.NewParser([]data.Data{})
+	p := data.NewParser()
 
 	assert.IsType(t, new(data.SimpleParser), p)
 }
@@ -57,7 +57,9 @@ func TestParsePropogatesChunkReadingErrors(t *testing.T) {
 }
 
 func TestParseConstructsNewInstancesOfDatas(t *testing.T) {
-	p := data.NewParser([]data.Data{new(data.Audio)})
+	p := data.NewParser(
+		func() data.Data { return &data.Audio{} },
+	)
 
 	d := p.New(0x08)
 
@@ -65,7 +67,7 @@ func TestParseConstructsNewInstancesOfDatas(t *testing.T) {
 }
 
 func TestParseReturnsNilWhenNoMatchingDataExists(t *testing.T) {
-	p := data.NewParser([]data.Data{})
+	p := data.NewParser()
 
 	d := p.New(0x08)
 
