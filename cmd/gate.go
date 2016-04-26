@@ -102,13 +102,13 @@ var (
 	// NetConnGate filters chunks to only those matching the NetConn type.
 	NetConnGate = &StreamIdGate{3}
 
-	// DataStreamGate filters chunks to only those matching the DataStream
-	// type.
-	DataStreamGate = NewUnionGate(&StreamIdGate{4}, &TypeIdGate{0x14})
-
 	// NetStreamGate filters chunks to only those matching the NetStream
 	// type.
-	NetStreamGate = NewUnionGate(&StreamIdGate{4}, NewAnyGate(
+	NetStreamGate = NewUnionGate(&StreamIdGate{4}, &TypeIdGate{0x14})
+
+	// DataStreamGate filters chunks to only those matching the DataStream
+	// type.
+	DataStreamGate = NewUnionGate(&StreamIdGate{4}, NewAnyGate(
 		&TypeIdGate{0x08}, &TypeIdGate{0x09}, &TypeIdGate{0x12},
 	))
 )
