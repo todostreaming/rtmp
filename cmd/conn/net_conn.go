@@ -34,11 +34,12 @@ type NetConn struct {
 	// writer is the chunk.Writer that is used to write data back into the
 	// chunk stream.
 	writer chunk.Writer
-	// chunker is the chunker responsible for turning Sendables into chunks.
+	// chunker is the chunker responsible for turning Marshallables into
+	// chunks.
 	chunker Chunker
 	// out is a channel written to by owners of this type when they want to
 	// send something over the channel.
-	out chan Sendable
+	out chan Marshallable
 
 	// errs is a channel which is written to when an error occurs.
 	errs chan error
@@ -56,7 +57,7 @@ func NewNetConnection(chunks <-chan *chunk.Chunk, writer chunk.Writer) *NetConn 
 		writer:      writer,
 		chunker:     NewChunker(ChunkStreamId),
 		in:          make(chan Receivable),
-		out:         make(chan Sendable),
+		out:         make(chan Marshallable),
 		errs:        make(chan error),
 		closer:      make(chan struct{}),
 	}
@@ -66,9 +67,9 @@ func NewNetConnection(chunks <-chan *chunk.Chunk, writer chunk.Writer) *NetConn 
 // when a Receivable is read from the connected client.
 func (n *NetConn) In() <-chan Receivable { return n.in }
 
-// Out returns a write-only channel of Sendables. It should be written to when
-// one wants to send a Sendable back to the client.
-func (n *NetConn) Out() chan<- Sendable { return n.out }
+// Out returns a write-only channel of Marshallables. It should be written to
+// when one wants to send a Marshallable back to the client.
+func (n *NetConn) Out() chan<- Marshallable { return n.out }
 
 // Close halts the Listen operation after the current item has finished
 // processing.
