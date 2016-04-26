@@ -28,23 +28,10 @@ func TestItRejectsUnsupportedVersionNumbers(t *testing.T) {
 	assert.Equal(t, "rtmp/handshake: unsupported version 4", err.Error())
 }
 
-func TestItWritesVersionAndS1(t *testing.T) {
+func TestItWritesVersion(t *testing.T) {
 	buf := new(bytes.Buffer)
 	v := handshake.NewVersionSequence()
 
 	assert.Nil(t, v.Write(buf))
 	assert.Equal(t, []byte{0x3}, buf.Bytes()[:1])
-	assert.Len(t, buf.Bytes(), 1+4+4+handshake.PayloadLen)
-}
-
-func TestItReturnsAnInitializedAckSequence(t *testing.T) {
-	v := handshake.NewVersionSequence()
-	next := v.Next()
-
-	switch typ := next.(type) {
-	case *handshake.AckSequence:
-		assert.Equal(t, v.S1.Payload, typ.S1Payload)
-	default:
-		t.Fatalf("handshake: got unknown type for next sequence (%T)", v)
-	}
 }
