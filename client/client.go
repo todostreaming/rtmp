@@ -33,7 +33,7 @@ func New(conn io.ReadWriter) *Client {
 	))
 
 	controlChunks, _ := chunks.Stream(2)
-	netChunks, _ := chunks.Stream(3, 4, 5)
+	netChunks, _ := chunks.Stream(3, 4, 5, 8)
 
 	return &Client{
 		chunks: chunks,
