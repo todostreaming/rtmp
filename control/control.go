@@ -9,6 +9,7 @@ var (
 		&SetChunkSize{},
 		&AbortMessage{},
 		&Acknowledgement{},
+		&Event{},
 		&WindowAckSize{},
 		&SetPeerBandwidth{},
 	}
