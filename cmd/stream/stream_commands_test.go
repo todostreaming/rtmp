@@ -12,6 +12,7 @@ func TestStreamCommandsImplementCommand(t *testing.T) {
 		new(stream.CommandPlay),
 		new(stream.CommandPlay2),
 		new(stream.CommandDeleteStream),
+		new(stream.CommandGetStreamLength),
 		new(stream.CommandReceiveAudio),
 		new(stream.CommandReceiveVideo),
 		new(stream.CommandPublish),

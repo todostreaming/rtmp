@@ -18,6 +18,12 @@ type (
 		StreamId float64
 	}
 
+	CommandGetStreamLength struct {
+		StreamId float64
+		_        *amf0.Null
+		PlayPath string
+	}
+
 	CommandReceiveAudio struct {
 		Successful bool
 	}
@@ -41,11 +47,12 @@ type (
 	}
 )
 
-func (_ *CommandPlay) IsCommand() bool         { return true }
-func (_ *CommandPlay2) IsCommand() bool        { return true }
-func (_ *CommandDeleteStream) IsCommand() bool { return true }
-func (_ *CommandReceiveAudio) IsCommand() bool { return true }
-func (_ *CommandReceiveVideo) IsCommand() bool { return true }
-func (_ *CommandPublish) IsCommand() bool      { return true }
-func (_ *CommandSeek) IsCommand() bool         { return true }
-func (_ *CommandPause) IsCommand() bool        { return true }
+func (_ *CommandPlay) IsCommand() bool            { return true }
+func (_ *CommandPlay2) IsCommand() bool           { return true }
+func (_ *CommandDeleteStream) IsCommand() bool    { return true }
+func (_ *CommandGetStreamLength) IsCommand() bool { return true }
+func (_ *CommandReceiveAudio) IsCommand() bool    { return true }
+func (_ *CommandReceiveVideo) IsCommand() bool    { return true }
+func (_ *CommandPublish) IsCommand() bool         { return true }
+func (_ *CommandSeek) IsCommand() bool            { return true }
+func (_ *CommandPause) IsCommand() bool           { return true }
