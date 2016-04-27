@@ -104,7 +104,12 @@ var (
 
 	// NetStreamGate filters chunks to only those matching the NetStream
 	// type.
-	NetStreamGate = NewUnionGate(&StreamIdGate{4}, &TypeIdGate{0x14})
+	NetStreamGate = NewUnionGate(
+		NewAnyGate(
+			&StreamIdGate{4}, &StreamIdGate{8},
+		),
+		&TypeIdGate{0x14},
+	)
 
 	// DataStreamGate filters chunks to only those matching the DataStream
 	// type.
