@@ -20,8 +20,8 @@ func TestDataReadsChunk(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, c.Header, d.header)
-	assert.Equal(t, byte(0x0), d.Control)
-	assert.Equal(t, []byte{0x1, 0x2, 0x3, 0x4}, d.Payload)
+	assert.Equal(t, byte(0x0), d.Control())
+	assert.Equal(t, []byte{0x1, 0x2, 0x3, 0x4}, d.Payload())
 }
 
 func TestDataReadsWithEmptyBody(t *testing.T) {
@@ -32,8 +32,8 @@ func TestDataReadsWithEmptyBody(t *testing.T) {
 	})
 
 	assert.Nil(t, err)
-	assert.Equal(t, byte(0x0), d.Control)
-	assert.Empty(t, d.Payload)
+	assert.Equal(t, byte(0x0), d.Control())
+	assert.Empty(t, d.Payload())
 }
 
 func TestDataDoesNotReadWhenMissingControl(t *testing.T) {

@@ -34,11 +34,8 @@ type Data interface {
 type data struct {
 	// header is the *chunk.Header that was read during Read().
 	header *chunk.Header
-	// Control represents the control sequence appended to the front of
-	// each data frame.
-	Control byte
-	// Payload represents the actual data encoded in each Data frame.
-	Payload []byte
+	// data is the data read from the *chunk.Chunk verbatim
+	data []byte
 }
 
 // Read implements the Data.Read function. In the best case, it assigns the
@@ -56,17 +53,23 @@ func (d *data) Read(c *chunk.Chunk) error {
 	}
 
 	d.header = c.Header
-	d.Control = c.Data[0]
-	d.Payload = c.Data[1:]
+	d.data = c.Data
 
 	return nil
 }
+
+// Control represents the control sequence appended to the front of
+// each data frame.
+func (d *data) Control() byte { return d.data[0] }
+
+// Payload represents the actual data encoded in each Data frame.
+func (d *data) Payload() []byte { return d.data[1:] }
 
 // Marshal implements the Data.Marshal, using the same header that was sent
 // during the original read.
 func (d *data) Marshal() (*chunk.Chunk, error) {
 	return &chunk.Chunk{
 		Header: d.header,
-		Data:   append([]byte{d.Control}, d.Payload...),
+		Data:   d.data,
 	}, nil
 }
