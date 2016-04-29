@@ -51,7 +51,7 @@ func (p *SimpleParser) Parse(c *chunk.Chunk) (Data, error) {
 			c.Header.MessageHeader.TypeId)
 	}
 
-	if err := d.Read(c.Data); err != nil {
+	if err := d.Read(c); err != nil {
 		return nil, err
 	}
 
