@@ -4,10 +4,8 @@ import "github.com/WatchBeam/amf0"
 
 type (
 	CommandPlay struct {
-		StreamName string
-		Start      float64
-		Duration   float64
-		Reset      bool
+		PlayPath string
+		Live     float64
 	}
 
 	CommandPlay2 struct {
@@ -16,12 +14,6 @@ type (
 
 	CommandDeleteStream struct {
 		StreamId float64
-	}
-
-	CommandGetStreamLength struct {
-		StreamId float64
-		_        *amf0.Null
-		PlayPath string
 	}
 
 	CommandReceiveAudio struct {
@@ -47,12 +39,11 @@ type (
 	}
 )
 
-func (_ *CommandPlay) IsCommand() bool            { return true }
-func (_ *CommandPlay2) IsCommand() bool           { return true }
-func (_ *CommandDeleteStream) IsCommand() bool    { return true }
-func (_ *CommandGetStreamLength) IsCommand() bool { return true }
-func (_ *CommandReceiveAudio) IsCommand() bool    { return true }
-func (_ *CommandReceiveVideo) IsCommand() bool    { return true }
-func (_ *CommandPublish) IsCommand() bool         { return true }
-func (_ *CommandSeek) IsCommand() bool            { return true }
-func (_ *CommandPause) IsCommand() bool           { return true }
+func (_ *CommandPlay) IsCommand() bool         { return true }
+func (_ *CommandPlay2) IsCommand() bool        { return true }
+func (_ *CommandDeleteStream) IsCommand() bool { return true }
+func (_ *CommandReceiveAudio) IsCommand() bool { return true }
+func (_ *CommandReceiveVideo) IsCommand() bool { return true }
+func (_ *CommandPublish) IsCommand() bool      { return true }
+func (_ *CommandSeek) IsCommand() bool         { return true }
+func (_ *CommandPause) IsCommand() bool        { return true }

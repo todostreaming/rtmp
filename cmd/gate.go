@@ -27,6 +27,21 @@ func (g *StreamIdGate) Open(c *chunk.Chunk) bool {
 	return c.Header.BasicHeader.StreamId == g.StreamId
 }
 
+// MessageStreamGate implements the Gate interface and filters chunks to be
+// matching a certain MessageStream ID.
+type MessageStreamGate struct {
+	// StreamId is the MessageStream ID that will be allowed through the
+	// filter.
+	StreamId uint32
+}
+
+var _ Gate = new(MessageStreamGate)
+
+// Open implements Gate.Open.
+func (g *MessageStreamGate) Open(c *chunk.Chunk) bool {
+	return c.Header.MessageHeader.StreamId == g.StreamId
+}
+
 // TypeIdGate provides an implementation of the Gate interface, filtering chunks
 // by their MessageHeader's TypeId.
 type TypeIdGate struct {
@@ -100,13 +115,20 @@ func (g *AnyGate) Open(c *chunk.Chunk) bool {
 
 var (
 	// NetConnGate filters chunks to only those matching the NetConn type.
-	NetConnGate = &StreamIdGate{3}
+	NetConnGate = NewAnyGate(
+		&StreamIdGate{3},
+		NewUnionGate(&StreamIdGate{8}, &MessageStreamGate{0x0}),
+	)
 
 	// NetStreamGate filters chunks to only those matching the NetStream
 	// type.
 	NetStreamGate = NewUnionGate(
 		NewAnyGate(
-			&StreamIdGate{4}, &StreamIdGate{8},
+			&StreamIdGate{4},
+			NewUnionGate(
+				&StreamIdGate{8},
+				&MessageStreamGate{0x1},
+			),
 		),
 		&TypeIdGate{0x14},
 	)
