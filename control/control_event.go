@@ -12,6 +12,7 @@ import (
 type EventType uint16
 
 const (
+	StreamBegin     EventType = 0
 	SetBufferLength EventType = 3
 )
 
