@@ -4,10 +4,8 @@ import "github.com/WatchBeam/amf0"
 
 type (
 	CommandPlay struct {
-		StreamName string
-		Start      float64
-		Duration   float64
-		Reset      bool
+		PlayPath string
+		Live     float64
 	}
 
 	CommandPlay2 struct {
