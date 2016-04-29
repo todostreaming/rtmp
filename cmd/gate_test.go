@@ -68,6 +68,30 @@ func TestTypeIdGateIsClosedForMismatchedTypes(t *testing.T) {
 	assert.False(t, open)
 }
 
+func TestMessageStreamGateIsOpenForMatchingStreams(t *testing.T) {
+	gate := &MessageStreamGate{1}
+
+	open := gate.Open(&chunk.Chunk{
+		Header: &chunk.Header{
+			MessageHeader: chunk.MessageHeader{StreamId: 1},
+		},
+	})
+
+	assert.True(t, open)
+}
+
+func TestMessageStreamGateIsClosedForMismatchedStreams(t *testing.T) {
+	gate := &MessageStreamGate{1}
+
+	open := gate.Open(&chunk.Chunk{
+		Header: &chunk.Header{
+			MessageHeader: chunk.MessageHeader{StreamId: 2},
+		},
+	})
+
+	assert.False(t, open)
+}
+
 func TestUnionGateIsOpenWhenAllChildrenAreOpen(t *testing.T) {
 	gate := NewUnionGate(new(TrueGate), new(TrueGate))
 
