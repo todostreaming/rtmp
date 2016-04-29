@@ -27,7 +27,7 @@ func TestRecvPushesDataWhenSuccessful(t *testing.T) {
 	go s.Recv()
 	s.Chunks() <- new(chunk.Chunk)
 
-	assert.Equal(t, new(data.Audio), <-s.In())
+	assert.Equal(t, new(data.Audio), <-s.Out())
 	parser.AssertExpectations(t)
 }
 
@@ -59,7 +59,7 @@ func TestRecvWritesToChunkWriter(t *testing.T) {
 	s := data.NewStream(make(chan *chunk.Chunk), writer)
 	go s.Recv()
 
-	s.Out() <- d
+	s.In() <- d
 
 	assert.Equal(t, []byte{
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

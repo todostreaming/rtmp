@@ -14,14 +14,14 @@ type Stream struct {
 	// `*chunk.Stream` into `Data`s.
 	parser Parser
 
-	// out holds all Data that is to be written back to the client.
-	out chan Data
+	// in holds all Data that is to be written back to the client.
+	in chan Data
 	// writer is the chunk.Writer that is used to write data back to the
 	// client in the RTMP chunk format.
 	writer chunk.Writer
 
-	// in holds each parsed Data token until it can be read somewhere else.
-	in chan Data
+	// out holds each parsed Data token until it can be read somewhere else.
+	out chan Data
 	// errs holds all of the errors that were encountered during parsing.
 	errs chan error
 	// closer is written to when the Stream is told to close itself. When a
@@ -48,13 +48,13 @@ func NewStream(chunks chan *chunk.Chunk, writer chunk.Writer) *Stream {
 
 func (s *Stream) Chunks() chan<- *chunk.Chunk { return s.chunks }
 
-// In returns a channel which is written to when a full Data payload can be
-// parsed from the RTMP chunk stream on which this `*data.Stream` is listening.
-func (s *Stream) In() <-chan Data { return s.in }
-
-// Out returns a write-only channel that, when written to, sends data back to
+// In returns a write-only channel that, when written to, sends data back to
 // the client.
-func (s *Stream) Out() chan<- Data { return s.out }
+func (s *Stream) In() chan<- Data { return s.in }
+
+// Out returns a channel which is written to when a full Data payload can be
+// parsed from the RTMP chunk stream on which this `*data.Stream` is listening.
+func (s *Stream) Out() <-chan Data { return s.out }
 
 // Errs returns a channel of errors which is written to when an error is
 // encountered during parsing.
@@ -97,9 +97,9 @@ func (s *Stream) Recv() {
 				continue
 			}
 
-			s.in <- data
-		case out := <-s.out:
-			c, err := out.Marshal()
+			s.out <- data
+		case in := <-s.in:
+			c, err := in.Marshal()
 			if err != nil {
 				s.errs <- err
 				continue
