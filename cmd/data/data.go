@@ -1,6 +1,10 @@
 package data
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/WatchBeam/rtmp/chunk"
+)
 
 var (
 	ErrControlMissing = errors.New("rtmp/data: missing control byte")
@@ -18,16 +22,20 @@ type Data interface {
 	// Read is a destructive operation which reads data into this chunk
 	// stream by feeding off of the given byte slice. In normal operation,
 	// the payload of an RTMP chunk is used here.
-	Read(b []byte) error
+	Read(c *chunk.Chunk) error
+
+	// Marshal marshals the data that is encoded in the implementation of
+	// Data that this method belongs to in a writeable *chunk.Chunk, or an
+	// error if the data was unable to be marshaled.
+	Marshal() (*chunk.Chunk, error)
 }
 
 // data is a simple implementation of part of the Data interface.
 type data struct {
-	// Control represents the control sequence appended to the front of
-	// each data frame.
-	Control byte
-	// Payload represents the actual data encoded in each Data frame.
-	Payload []byte
+	// header is the *chunk.Header that was read during Read().
+	header *chunk.Header
+	// data is the data read from the *chunk.Chunk verbatim
+	data []byte
 }
 
 // Read implements the Data.Read function. In the best case, it assigns the
@@ -39,13 +47,29 @@ type data struct {
 //
 // Otherwise a value of nil is returned, signifying that the Read operation
 // succeeded without error.
-func (d *data) Read(b []byte) error {
-	if len(b) < 1 {
+func (d *data) Read(c *chunk.Chunk) error {
+	if len(c.Data) < 1 {
 		return ErrControlMissing
 	}
 
-	d.Control = b[0]
-	d.Payload = b[1:]
+	d.header = c.Header
+	d.data = c.Data
 
 	return nil
+}
+
+// Control represents the control sequence appended to the front of
+// each data frame.
+func (d *data) Control() byte { return d.data[0] }
+
+// Payload represents the actual data encoded in each Data frame.
+func (d *data) Payload() []byte { return d.data[1:] }
+
+// Marshal implements the Data.Marshal, using the same header that was sent
+// during the original read.
+func (d *data) Marshal() (*chunk.Chunk, error) {
+	return &chunk.Chunk{
+		Header: d.header,
+		Data:   d.data,
+	}, nil
 }

@@ -58,7 +58,7 @@ func New(chunks chunk.Stream, writer chunk.Writer) *Manager {
 		},
 
 		netConn:    conn.NewNetConnection(netConnChunks, writer),
-		dataStream: data.NewStream(dataStreamChunks),
+		dataStream: data.NewStream(dataStreamChunks, writer),
 		netStream:  stream.New(netStreamChunks, writer),
 	}
 }

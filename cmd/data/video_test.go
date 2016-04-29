@@ -25,7 +25,7 @@ func TestvideoProducesCorrectCodecs(t *testing.T) {
 		{0x05, H264VideoCodec},
 	} {
 		d := new(Video)
-		d.data.Control = c.Control
+		d.data.data = []byte{c.Control}
 
 		assert.Equal(t, c.VideoCodec, d.Codec())
 	}
@@ -43,7 +43,7 @@ func TestVideoProducesCorrectTypes(t *testing.T) {
 		{0x4, KeyframeVideoType},
 	} {
 		d := new(Video)
-		d.data.Control = c.Control
+		d.data.data = []byte{c.Control}
 
 		assert.Equal(t, c.VideoType, d.Type())
 	}

@@ -14,8 +14,14 @@ type Stream struct {
 	// `*chunk.Stream` into `Data`s.
 	parser Parser
 
-	// in holds each parsed Data token until it can be read somewhere else.
+	// in holds all Data that is to be written back to the client.
 	in chan Data
+	// writer is the chunk.Writer that is used to write data back to the
+	// client in the RTMP chunk format.
+	writer chunk.Writer
+
+	// out holds each parsed Data token until it can be read somewhere else.
+	out chan Data
 	// errs holds all of the errors that were encountered during parsing.
 	errs chan error
 	// closer is written to when the Stream is told to close itself. When a
@@ -27,12 +33,14 @@ type Stream struct {
 // NewStream creates and returns a pointer to a new instance of the Stream type.
 // The instance is initialized with the given chunk stream, and all of the
 // internal channels are `make()`-d.
-func NewStream(chunks chan *chunk.Chunk) *Stream {
+func NewStream(chunks chan *chunk.Chunk, writer chunk.Writer) *Stream {
 	return &Stream{
 		chunks: chunks,
+		writer: writer,
 		parser: DefaultParser,
 
 		in:     make(chan Data),
+		out:    make(chan Data),
 		errs:   make(chan error),
 		closer: make(chan struct{}),
 	}
@@ -40,9 +48,13 @@ func NewStream(chunks chan *chunk.Chunk) *Stream {
 
 func (s *Stream) Chunks() chan<- *chunk.Chunk { return s.chunks }
 
-// In returns a channel which is written to when a full Data payload can be
+// In returns a write-only channel that, when written to, sends data back to
+// the client.
+func (s *Stream) In() chan<- Data { return s.in }
+
+// Out returns a channel which is written to when a full Data payload can be
 // parsed from the RTMP chunk stream on which this `*data.Stream` is listening.
-func (s *Stream) In() <-chan Data { return s.in }
+func (s *Stream) Out() <-chan Data { return s.out }
 
 // Errs returns a channel of errors which is written to when an error is
 // encountered during parsing.
@@ -61,6 +73,9 @@ func (s *Stream) SetParser(p Parser) { s.parser = p }
 // Data type is passed to the appropriate channel. Otherwise, an error is pushed
 // onto the `errs` channel.
 //
+// Recv also reads from the `out` channel when data is available on it, marshals
+// it using the Data.Marshal function, and then sends it over the chunk stream.
+//
 // Recv also wathces the internal closer channel so that this `*data.Stream` may
 // clean up after itself post-closing.
 //
@@ -68,6 +83,7 @@ func (s *Stream) SetParser(p Parser) { s.parser = p }
 func (s *Stream) Recv() {
 	defer func() {
 		close(s.in)
+		close(s.out)
 		close(s.errs)
 		close(s.closer)
 	}()
@@ -81,7 +97,17 @@ func (s *Stream) Recv() {
 				continue
 			}
 
-			s.in <- data
+			s.out <- data
+		case in := <-s.in:
+			c, err := in.Marshal()
+			if err != nil {
+				s.errs <- err
+				continue
+			}
+
+			if err = s.writer.Write(c); err != nil {
+				s.errs <- err
+			}
 		case <-s.closer:
 			return
 		}

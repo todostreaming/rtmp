@@ -40,7 +40,7 @@ var _ Data = new(Video)
 func (v *Video) Id() byte { return VideoTypeId }
 
 // Codec returns the VideoCodec assosciated with this frame of Video.
-func (v *Video) Codec() VideoCodec { return VideoCodec((v.Control & 0x0f) >> 0) }
+func (v *Video) Codec() VideoCodec { return VideoCodec((v.Control() & 0x0f) >> 0) }
 
 // Type returns the VideoType assosciated with this frame of Video.
-func (v *Video) Type() VideoType { return VideoType((v.Control & 0xf0) >> 4) }
+func (v *Video) Type() VideoType { return VideoType((v.Control() & 0xf0) >> 4) }
