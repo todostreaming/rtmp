@@ -2,9 +2,7 @@ package conn
 
 import (
 	"bytes"
-	"encoding/hex"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/WatchBeam/amf0"
@@ -102,8 +100,6 @@ func TestSendablesAreWrittenToChunkStream(t *testing.T) {
 	nc.Out() <- &CreateStreamResponse{
 		TransactionId: 1,
 	}
-
-	fmt.Println(hex.Dump(buf.Bytes()))
 
 	assert.Equal(t, 0, len(nc.Errs()))
 	assert.Equal(t, []byte{
