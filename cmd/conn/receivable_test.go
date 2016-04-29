@@ -12,6 +12,7 @@ func TestRelevantCommandsImplementReceivable(t *testing.T) {
 		new(conn.CreateStreamCommand),
 		new(conn.ReleaseCommand),
 		new(conn.FCPublishCommand),
+		new(conn.GetStreamLength),
 	} {
 		if _, receivable := c.(conn.Receivable); !receivable {
 			t.Fatalf("type %T does not implement Receivable", c)

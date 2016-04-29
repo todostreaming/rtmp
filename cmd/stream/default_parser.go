@@ -16,15 +16,14 @@ var (
 	// For a complete list of commands that are supported, see the list
 	// below.
 	DefaultParser Parser = NewParser(map[string]CommandFactory{
-		"play":            func() Command { return new(CommandPlay) },
-		"play2":           func() Command { return new(CommandPlay2) },
-		"deleteStream":    func() Command { return new(CommandDeleteStream) },
-		"getStreamLength": func() Command { return new(CommandGetStreamLength) },
-		"receiveAudio":    func() Command { return new(CommandReceiveAudio) },
-		"receiveVideo":    func() Command { return new(CommandReceiveVideo) },
-		"publish":         func() Command { return new(CommandPublish) },
-		"seek":            func() Command { return new(CommandSeek) },
-		"pause":           func() Command { return new(CommandPause) },
+		"play":         func() Command { return new(CommandPlay) },
+		"play2":        func() Command { return new(CommandPlay2) },
+		"deleteStream": func() Command { return new(CommandDeleteStream) },
+		"receiveAudio": func() Command { return new(CommandReceiveAudio) },
+		"receiveVideo": func() Command { return new(CommandReceiveVideo) },
+		"publish":      func() Command { return new(CommandPublish) },
+		"seek":         func() Command { return new(CommandSeek) },
+		"pause":        func() Command { return new(CommandPause) },
 	})
 )
 

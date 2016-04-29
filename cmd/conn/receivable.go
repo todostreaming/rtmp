@@ -29,7 +29,14 @@ type FCPublishCommand struct {
 	StreamKey     string
 }
 
+type GetStreamLength struct {
+	StreamId float64
+	Nil      *amf0.Null
+	PlayPath string
+}
+
 func (_ *ConnectCommand) CanReceive() bool      { return true }
 func (_ *CreateStreamCommand) CanReceive() bool { return true }
 func (_ *ReleaseCommand) CanReceive() bool      { return true }
 func (_ *FCPublishCommand) CanReceive() bool    { return true }
+func (_ *GetStreamLength) CanReceive() bool     { return true }

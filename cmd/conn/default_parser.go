@@ -32,6 +32,10 @@ var (
 		"releaseStream": func() Receivable { return new(ReleaseCommand) },
 
 		"FCPublish": func() Receivable { return new(FCPublishCommand) },
+
+		"getStreamLength": func() Receivable {
+			return new(GetStreamLength)
+		},
 	})
 )
 
