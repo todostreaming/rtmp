@@ -1,6 +1,6 @@
 package control
 
-import "github.com/WatchBeam/rtmp/chunk"
+import "github.com/todostreaming/rtmp/chunk"
 
 // Stream represents an RTMP-compliant bi-directional transfer of RTMP control
 // sequences. It parses control sequences out of a chunk.Stream, and writes them

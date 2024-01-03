@@ -1,6 +1,6 @@
 package control
 
-import "github.com/WatchBeam/rtmp/chunk"
+import "github.com/todostreaming/rtmp/chunk"
 
 // Chunker is an interface representing a type responsible for tunring a RTMP
 // control message into an RTMP chunk, capable of being sent over the network.

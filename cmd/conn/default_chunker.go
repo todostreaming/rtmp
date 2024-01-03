@@ -1,6 +1,6 @@
 package conn
 
-import "github.com/WatchBeam/rtmp/chunk"
+import "github.com/todostreaming/rtmp/chunk"
 
 // DefaultChunker provides a default implementation of the Chunker interface.
 // All chunks generated are sent over the given StreamId.

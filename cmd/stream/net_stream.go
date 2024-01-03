@@ -3,7 +3,7 @@ package stream
 import (
 	"bytes"
 
-	"github.com/WatchBeam/rtmp/chunk"
+	"github.com/todostreaming/rtmp/chunk"
 )
 
 // Type NetStream is an implementation of the NetStream type as described in the

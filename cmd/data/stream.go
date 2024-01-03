@@ -1,6 +1,6 @@
 package data
 
-import "github.com/WatchBeam/rtmp/chunk"
+import "github.com/todostreaming/rtmp/chunk"
 
 // Type Stream encapsulates a continuous stream of data messages coming over
 // an RTMP chunk stream. The Stream parses each full chunk that it receives and

@@ -1,6 +1,6 @@
 package data
 
-import "github.com/WatchBeam/rtmp/chunk"
+import "github.com/todostreaming/rtmp/chunk"
 
 // Type Parser is an interface which contains a single method, Parse. It is
 // responsible for turning a *chunk.Chunk into an appropriate Data type, or

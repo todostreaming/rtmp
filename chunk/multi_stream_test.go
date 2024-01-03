@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/WatchBeam/rtmp/chunk"
+	"github.com/todostreaming/rtmp/chunk"
 	"github.com/stretchr/testify/assert"
 )
 
