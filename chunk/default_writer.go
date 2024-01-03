@@ -5,7 +5,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/WatchBeam/rtmp/spec"
+	"github.com/todostreaming/rtmp/spec"
 )
 
 // DefaultWriter provides a default implementation of chunk.Writer interface.

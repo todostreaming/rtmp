@@ -3,7 +3,7 @@ package stream_test
 import (
 	"testing"
 
-	"github.com/WatchBeam/rtmp/cmd/stream"
+	"github.com/todostreaming/rtmp/cmd/stream"
 	"github.com/stretchr/testify/assert"
 )
 

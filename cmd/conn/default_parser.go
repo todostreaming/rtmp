@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/WatchBeam/amf0"
-	"github.com/WatchBeam/amf0/encoding"
+	"github.com/todostreaming/amf0"
+	"github.com/todostreaming/amf0/encoding"
 )
 
 var (
@@ -72,7 +72,7 @@ func NewParser(typs map[string]ReceviableFactory) *SimpleParser {
 // error in the following cases:
 //
 //   1) no corresponding command could be found
-//   2) an error occured during unmarshalling (see WatchBeam/rtmp)
+//   2) an error occured during unmarshalling (see todostreaming/rtmp)
 //
 // Otherwise the Receivable type is returned succesfully, and no error is
 // returned.

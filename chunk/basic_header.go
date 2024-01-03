@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/WatchBeam/rtmp/spec"
+	"github.com/todostreaming/rtmp/spec"
 )
 
 // BasicHeader represents the Basic Header component of the RTMP "chunk" type,

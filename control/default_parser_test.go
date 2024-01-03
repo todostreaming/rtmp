@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/WatchBeam/rtmp/chunk"
-	"github.com/WatchBeam/rtmp/control"
+	"github.com/todostreaming/rtmp/chunk"
+	"github.com/todostreaming/rtmp/control"
 	"github.com/stretchr/testify/assert"
 )
 

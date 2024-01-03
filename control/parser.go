@@ -1,6 +1,6 @@
 package control
 
-import "github.com/WatchBeam/rtmp/chunk"
+import "github.com/todostreaming/rtmp/chunk"
 
 // Type Parser represents an interface capable of turning RTMP chunks into
 // Control sequences.

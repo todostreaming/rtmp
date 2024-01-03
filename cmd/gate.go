@@ -1,6 +1,6 @@
 package cmd
 
-import "github.com/WatchBeam/rtmp/chunk"
+import "github.com/todostreaming/rtmp/chunk"
 
 // Gate is a single-function interfaces that provides infomration about whether
 // a certain chan<- *chunk.Chunk is "open" to accept a Chunk. When wrapped over
